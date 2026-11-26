@@ -4301,14 +4301,6 @@
             headers["Authorization"] = v.startsWith("Bearer ") ? v : ("Bearer " + v);
             return headers;
           }
-          if (v.startsWith("{")) {
-            const parsed = JSON.parse(v);
-            const tok = parsed.access_token || parsed.token || parsed.jwt;
-            if (tok && typeof tok === "string") {
-              headers["Authorization"] = tok.startsWith("Bearer ") ? tok : ("Bearer " + tok);
-              return headers;
-            }
-          }
         }
       } catch (_) {}
     }
