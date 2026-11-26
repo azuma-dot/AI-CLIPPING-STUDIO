@@ -18,7 +18,6 @@ def _prepare_netscape_cookies(cookie_path: Path) -> Path | None:
 
     out_tmp = Path(tempfile.gettempdir()) / "ytdlp_cookies.txt"
 
-    # Case 1: JSON array exported by browser extensions (e.g. Cookie-Editor / EditThisCookie)
     if raw.startswith("["):
         try:
             items = json.loads(raw)
@@ -41,27 +40,23 @@ def _prepare_netscape_cookies(cookie_path: Path) -> Path | None:
                     except Exception:
                         expiry = "0"
                     netscape_lines.append(
-                        f"{domain}	{subdomains}	{path}	{secure}	{expiry}	{name}	{value}"
+                        f"{domain}\t{subdomains}\t{path}\t{secure}\t{expiry}\t{name}\t{value}"
                     )
                 if len(netscape_lines) > 1:
-                    out_tmp.write_text("
-".join(netscape_lines) + "
-", encoding="utf-8")
+                    out_tmp.write_text("\n".join(netscape_lines) + "\n", encoding="utf-8")
                     return out_tmp
         except Exception:
             return None
 
-    # Case 2: Already Netscape tab-separated format (7 columns per non-comment line)
     valid_rows = 0
     for line in raw.splitlines():
         s = line.strip()
         if not s or s.startswith("#"):
             continue
-        if len(s.split("	")) >= 7:
+        if len(s.split("\t")) >= 7:
             valid_rows += 1
     if valid_rows > 0:
-        out_tmp.write_text(raw + "
-", encoding="utf-8")
+        out_tmp.write_text(raw + "\n", encoding="utf-8")
         return out_tmp
 
     return None
