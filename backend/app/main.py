@@ -690,7 +690,7 @@ async def polish_clip_studio_pro(
     )
 
     base_label = base_clip.get("hook") or base_clip.get("title") or f"Viral Clip #{clip_index}"
-    pro_title = custom_name if custom_name else f"PRO — {base_label}"
+    pro_title = custom_name if custom_name else f"PRO â€” {base_label}"
     pro_entry = {
         **rendered_pro,
         "title": pro_title,
@@ -774,8 +774,8 @@ async def auto_generate_all_pro_clips(
             game_y=float(body.get("game_y", 0.50)),
         )
         base_label = base_clip.get("hook") or base_clip.get("title") or f"Viral Clip #{clip_num}"
-        clean_base = str(base_label).replace("AI PRO — ", "").replace("PRO — ", "")
-        pro_title = f"AI PRO — {clean_base}"
+        clean_base = str(base_label).replace("AI PRO â€” ", "").replace("PRO â€” ", "")
+        pro_title = f"AI PRO â€” {clean_base}"
         pro_entry = {
             **rendered_pro,
             "title": pro_title,
@@ -7278,3 +7278,30 @@ def cos_delete_suggestion(payload: _CosSuggestionDeleteIn):
     _COS_SUGGESTION_LOG.write_text(("\n".join(kept) + "\n") if kept else "", encoding="utf-8")
     return {"ok": True}
 # === COS_SUGGESTION_LOCAL_END ===
+
+# === AUTO-FALLBACK ROUTES FOR MISSING PROJECT / COS ASSET ENDPOINTS ===
+@app.get("/api/projects/{project_id}/transcript")
+async def _fallback_project_transcript(project_id: str):
+    return {"project_id": project_id, "status": "pending", "segments": [], "text": ""}
+
+@app.get("/api/projects/{project_id}/clips")
+async def _fallback_project_clips(project_id: str):
+    try:
+        res = await cos_output_clips(project_id)
+        if isinstance(res, dict) and "clips" in res:
+            return res
+    except Exception:
+        pass
+    return {"project_id": project_id, "clips": []}
+
+@app.get("/api/projects/{project_id}/moments")
+@app.get("/api/projects/{project_id}/highlights")
+@app.get("/api/projects/{project_id}/viral-moments")
+async def _fallback_project_moments(project_id: str):
+    return {"project_id": project_id, "moments": [], "highlights": [], "viral_moments": []}
+
+@app.get("/api/cos-viral-score-asset/{project_id}/{filename}")
+@app.get("/api/cos-hook-lab-asset/{project_id}/{filename}")
+async def _fallback_cos_asset(project_id: str, filename: str):
+    from fastapi import HTTPException
+    raise HTTPException(status_code=404, detail="Asset not generated yet")
