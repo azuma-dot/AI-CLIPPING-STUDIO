@@ -18,4 +18,8 @@ WORKDIR /app/backend
 ENV PORT=8080
 EXPOSE 8080
 
+RUN pip install --no-cache-dir --upgrade pip "yt-dlp[default]"
+RUN curl -fsSL https://deno.land/install.sh | sh
+ENV PATH="/root/.deno/bin:/opt/render/.deno/bin:${PATH}"
+
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
