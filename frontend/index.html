@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Clipping Studio ? Clipping OS</title>
+  <style>
+    :root {
+      --bg: #07080e;
+      --surface: #0e101a;
+      --surface-2: #141826;
+      --text: #f5f7fc;
+      --muted: #98a2b8;
+      --border: rgba(148, 163, 184, 0.16);
+      --glow: rgba(129, 140, 248, 0.55);
+      --accent: #7c5cff;
+      --accent-2: #22d3ee;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --dur: 280ms;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background:
+        radial-gradient(880px 420px at 82% -8%, rgba(124, 92, 255, 0.16), transparent 60%),
+        radial-gradient(680px 380px at 8% 20%, rgba(34, 211, 238, 0.08), transparent 55%),
+        var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    .lit {
+      position: relative;
+      background: linear-gradient(180deg, rgba(20, 24, 38, 0.94), rgba(13, 16, 26, 0.96));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+    }
+
+    .lit::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: 16px;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(129, 140, 248, 0.52), rgba(34, 211, 238, 0.14), rgba(124, 92, 255, 0.4));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0.48;
+      pointer-events: none;
+      transition: opacity var(--dur) var(--ease);
+    }
+
+    .lit:hover {
+      border-color: var(--glow);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.58), 0 0 24px rgba(124, 92, 255, 0.16);
+    }
+
+    .lit:hover::before { opacity: 0.95; }
+
+    .shell {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 22px;
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    /* LEFT COLUMN: DOCKED MOTION THUMBNAIL + COLLAPSING 3-DOT/LINE TRIGGER */
+    .left-rail {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: sticky;
+      top: 22px;
+    }
+
+    .motion-card { padding: 14px; }
+
+    .motion-stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 12px;
+      overflow: hidden;
+      background: radial-gradient(circle at 30% 30%, rgba(124, 92, 255, 0.35), rgba(15, 23, 42, 0.95));
+      border: 1px solid rgba(129, 140, 248, 0.34);
+      transition: aspect-ratio var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    }
+
+    .motion-bg-anim {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(125deg, rgba(124, 92, 255, 0.32), transparent 55%),
+        linear-gradient(305deg, rgba(34, 211, 238, 0.22), transparent 50%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 24px);
+      animation: drift 6s linear infinite;
+    }
+
+    @keyframes drift {
+      0% { transform: scale(1) translateX(0); }
+      50% { transform: scale(1.05) translateX(-8px); }
+      100% { transform: scale(1) translateX(0); }
+    }
+
+    .motion-overlay {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .motion-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: rgba(7, 8, 14, 0.72);
+      border: 1px solid rgba(129, 140, 248, 0.4);
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-2);
+      box-shadow: 0 0 8px var(--accent-2);
+    }
+
+    .dock-trigger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 32px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      box-shadow: none;
+      color: #fff;
+      cursor: pointer;
+      transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
+    }
+
+    .dock-trigger:hover {
+      transform: scale(1.08);
+    }
+
+    .dock-dots, .dock-lines {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: all var(--dur) var(--ease);
+    }
+
+    
+
+    .dock-lines {
+      flex-direction: column;
+      gap: 3.5px;
+    }
+
+    .dock-lines i {
+      width: 16px;
+      height: 2px;
+      border-radius: 2px;
+      background: #fff;
+      display: block;
+      transition: all var(--dur) var(--ease);
+    }
+
+    .dock-trigger.is-open .dock-dots,
+    .dock-trigger.is-open .dock-lines i:not(.line-zero) {
+      opacity: 0;
+      width: 0;
+      margin: 0;
+      transform: scaleX(0);
+    }
+
+    .dock-trigger.is-open .dock-lines { gap: 0; }
+
+    .dock-trigger.is-open .dock-lines i.line-zero {
+      width: 22px;
+      height: 2.5px;
+      background: #fff;
+      box-shadow: 0 0 10px var(--accent-2);
+    }
+
+    .motion-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.76rem;
+      color: #e2e8f0;
+      background: rgba(7, 8, 14, 0.68);
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* SECTION DRAWER WITH ~280ms OPEN / CLOSE MOTION */
+    .section-drawer {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transform: translateY(-8px) scale(0.985);
+      pointer-events: none;
+      transition:
+        max-height var(--dur) var(--ease),
+        opacity var(--dur) var(--ease),
+        transform var(--dur) var(--ease);
+    }
+
+    .section-drawer.open {
+      max-height: 920px;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .drawer-inner {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .sec-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 11px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: all 180ms var(--ease);
+    }
+
+    .sec-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(129, 140, 248, 0.25);
+    }
+
+    .sec-btn.active {
+      color: #fff;
+      background: linear-gradient(90deg, rgba(124, 92, 255, 0.24), rgba(34, 211, 238, 0.08));
+      border-color: rgba(129, 140, 248, 0.55);
+      box-shadow: 0 0 18px rgba(124, 92, 255, 0.16);
+    }
+
+    .sec-num {
+      font-size: 0.75rem;
+      color: var(--accent-2);
+      font-weight: 700;
+    }
+
+    /* RIGHT WORKSPACE: PERSISTENT PORTRAIT THUMBNAIL + TOP CLOSE BUTTON + ACTIVE PANEL */
+    .workspace {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .topbar {
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .topbar h1 { margin: 0; font-size: 1.2rem; letter-spacing: -0.02em; }
+    .topbar p { margin: 2px 0 0; font-size: 0.84rem; color: var(--muted); }
+
+    .btn-grad {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(165, 180, 252, 0.55);
+      background: linear-gradient(135deg, #7c5cff, #5642e6);
+      color: #fff;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 180ms var(--ease), box-shadow 180ms var(--ease);
+    }
+
+    .btn-grad:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 22px rgba(124, 92, 255, 0.36);
+    }
+
+    /* Layering so portrait thumbnail stays visible behind/beside active section panel */
+    .stage-arena {
+      position: relative;
+      display: grid;
+      grid-template-columns: 236px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+      transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+    }
+
+    .stage-arena.closing {
+      opacity: 0;
+      transform: translateY(8px) scale(0.985);
+    }
+
+    .portrait-showcase {
+      position: sticky;
+      top: 22px;
+      z-index: 1;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .portrait-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 9 / 16;
+      border-radius: 13px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 22%, rgba(124, 92, 255, 0.38), rgba(10, 13, 24, 0.96));
+      border: 1px solid rgba(129, 140, 248, 0.55);
+      box-shadow: 0 0 28px rgba(124, 92, 255, 0.24);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 12px;
+    }
+
+    .portrait-motion-layer {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(124, 92, 255, 0.16), transparent 45%, rgba(34, 211, 238, 0.14)),
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 20px);
+      animation: portraitPulse 5s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes portraitPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
+
+    .portrait-top-bar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .portrait-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(7, 8, 14, 0.82);
+      border: 1px solid rgba(34, 211, 238, 0.45);
+      color: var(--accent-2);
+    }
+
+    .portrait-close-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(9, 11, 19, 0.86);
+      color: #fff;
+      font-size: 0.9rem;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: all 180ms var(--ease);
+    }
+
+    .portrait-close-btn:hover {
+      border-color: var(--accent-2);
+      background: rgba(124, 92, 255, 0.35);
+      transform: scale(1.06);
+    }
+
+    .portrait-meta {
+      position: relative;
+      z-index: 2;
+      background: rgba(7, 8, 14, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 9px 10px;
+      font-size: 0.76rem;
+    }
+
+    .active-page-card {
+      position: relative;
+      z-index: 2;
+      padding: 20px;
+      border-color: rgba(129, 140, 248, 0.48);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.52), 0 0 28px rgba(124, 92, 255, 0.16);
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .active-page-card.entering {
+      opacity: 0;
+      transform: translateY(10px) scale(0.988);
+    }
+
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .page-head h2 { margin: 0; font-size: 1.08rem; }
+
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+
+    .sub-box {
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(9, 11, 19, 0.72);
+    }
+
+    .sub-box h3 { margin: 0 0 8px; font-size: 0.9rem; }
+    .sub-box p { margin: 0; font-size: 0.82rem; color: var(--muted); }
+
+    .cap-list {
+      margin: 8px 0 0;
+      padding-left: 16px;
+      font-size: 0.79rem;
+      color: var(--muted);
+      display: grid;
+      gap: 4px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .field label { font-size: 0.78rem; color: var(--muted); }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #090b13;
+      color: var(--text);
+      font-size: 0.85rem;
+    }
+
+    .project-list { display: flex; flex-direction: column; gap: 8px; }
+    .project-item {
+      padding: 11px 13px;
+      border-radius: 11px;
+      border: 1px solid var(--border);
+      background: rgba(9, 11, 19, 0.7);
+      font-size: 0.84rem;
+    }
+
+    @media (max-width: 1020px) {
+      .shell { grid-template-columns: 1fr; }
+      .left-rail, .portrait-showcase { position: static; }
+      .stage-arena { grid-template-columns: 1fr; }
+      .portrait-frame { max-width: 240px; margin: 0 auto; }
+    }
+
+    @media (max-width: 720px) {
+      .grid-3, .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+
+    <style id="cos-overview-20-css">
+      .ov-grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+      .ov-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+      .ov-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+      .ov-card { padding: 13px 14px; border-radius: 12px; border: 1px solid var(--border); background: rgba(9, 11, 19, 0.78); }
+      .ov-label { font-size: 0.74rem; color: var(--muted); display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+      .ov-num { font-size: 1.35rem; font-weight: 700; margin-top: 6px; letter-spacing: -0.02em; }
+      .ov-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+      .ov-btn-sm { padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(129, 140, 248, 0.45); background: rgba(124, 92, 255, 0.18); color: #fff; font-size: 0.76rem; font-weight: 600; cursor: pointer; }
+      .ov-btn-sm:hover { background: rgba(124, 92, 255, 0.34); }
+      .ov-bars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end; height: 74px; margin-top: 10px; }
+      .ov-bar { border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, var(--accent-2), var(--accent)); min-height: 12px; opacity: 0.88; }
+      .ov-item-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.06); background: rgba(15, 19, 32, 0.72); font-size: 0.8rem; margin-top: 7px; }
+      .ov-meter { height: 7px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 8px; }
+      .ov-meter > i { display: block; height: 100%; width: 42%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+      @media (max-width: 1020px) { .ov-grid-4, .ov-grid-3, .ov-grid-2 { grid-template-columns: 1fr; } }
+    </style>
+
+
+    <style id="cos-captain-bg-blur-css">
+      body.post-login-bg {
+        position: relative;
+        background: #09080d;
+      }
+      body.post-login-bg::before {
+        content: "";
+        position: fixed;
+        inset: -18px;
+        z-index: -2;
+        background:
+          linear-gradient(180deg, rgba(8, 9, 15, 0.42), rgba(8, 9, 15, 0.68)),
+          url("assets/bg-captain-smile.png") center/cover no-repeat,
+          radial-gradient(circle at 60% 25%, rgba(251, 146, 60, 0.28), rgba(124, 92, 255, 0.2), #09080d);
+        filter: blur(0px) saturate(1.05);
+        transform: scale(1);
+        transition: filter var(--dur) var(--ease), transform var(--dur) var(--ease);
+        pointer-events: none;
+      }
+      body.post-login-bg.bg-blurred::before {
+        filter: blur(11px) saturate(1.15);
+        transform: scale(1.04);
+      }
+      .motion-card {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 4px 0 !important;
+      }
+      .motion-card::before {
+        display: none !important;
+      }
+      .motion-stage {
+        background: transparent !important;
+        border: none !important;
+        aspect-ratio: auto !important;
+        min-height: 36px;
+        overflow: visible !important;
+      }
+      .motion-bg-anim {
+        display: none !important;
+      }
+      .motion-overlay {
+        padding: 0 !important;
+        height: auto !important;
+      }
+      .active-page-card.section-lit {
+        border-color: rgba(251, 191, 36, 0.65) !important;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.62), 0 0 32px rgba(124, 92, 255, 0.28) !important;
+      }
+    </style>
+
+
+<style id="cos-only-hide-portrait-box">
+  .portrait-showcase,
+  .portrait-frame {
+    display: none !important;
+  }
+  .stage-arena {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+</style>
+
+
+<style id="cos-luffy-bg-3line-blur">
+  body.cos-luffy-bg {
+    position: relative;
+    background: #08090f !important;
+  }
+  body.cos-luffy-bg::before {
+    content: "";
+    position: fixed;
+    inset: -16px;
+    z-index: -2;
+    background:
+      linear-gradient(180deg, rgba(8, 9, 15, 0.34), rgba(8, 9, 15, 0.56)),
+      url("assets/bg-luffy.png") center/cover no-repeat,
+      url("assets/bg-captain-smile.png") center/cover no-repeat;
+    filter: blur(0px) saturate(1.05);
+    transform: scale(1);
+    transition: filter var(--dur, 280ms) var(--ease, cubic-bezier(0.22, 1, 0.36, 1)), transform var(--dur, 280ms) var(--ease, cubic-bezier(0.22, 1, 0.36, 1));
+    pointer-events: none;
+  }
+  body.cos-luffy-bg.bg-blurred::before {
+    filter: blur(12px) saturate(1.15);
+    transform: scale(1.05);
+  }
+</style>
+
+
+
+
+<style id="cos-luffy-png-style">
+  html {
+    background: transparent !important;
+  }
+  body,
+  body.post-login-bg,
+  body.cos-luffy-bg {
+    position: relative !important;
+    background: transparent !important;
+    min-height: 100vh !important;
+  }
+  #cosLuffyBgLayer,
+  body:not(.luffy-3line-blurred) #cosLuffyBgLayer {
+    position: fixed !important;
+    inset: -18px !important;
+    z-index: 0 !important;
+    background-image:
+      linear-gradient(180deg, rgba(8, 9, 16, 0.22), rgba(8, 9, 16, 0.44)),
+      url("/assets/luffy.png?v=20261126023101") !important;
+    background-position: center !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    filter: blur(0px) saturate(1.06) !important;
+    transform: scale(1) !important;
+    transition: filter var(--dur, 280ms) var(--ease, cubic-bezier(0.22, 1, 0.36, 1)), transform var(--dur, 280ms) var(--ease, cubic-bezier(0.22, 1, 0.36, 1)) !important;
+    pointer-events: none !important;
+  }
+  body.luffy-3line-blurred #cosLuffyBgLayer {
+    filter: blur(12px) saturate(1.16) !important;
+    transform: scale(1.05) !important;
+  }
+  .shell,
+  .workspace,
+  .left-rail,
+  .topbar,
+  .stage-arena,
+  .active-page-card,
+  #sectionDrawer {
+    position: relative;
+    z-index: 1;
+  }
+  .lit {
+    background: linear-gradient(180deg, rgba(15, 18, 30, 0.72), rgba(10, 13, 23, 0.78)) !important;
+  }
+</style>
+
+
+<style id="cos-kill-top-blur">
+  body::before,
+  body::after {
+    content: none !important;
+    display: none !important;
+  }
+  .shell,
+  .workspace,
+  .stage-arena,
+  .left-rail,
+  .topbar {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+</style>
+
+
+<style id="cos-6-icons-style">
+  .cos-sec-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #e2e8f0;
+    margin-right: 10px;
+    flex-shrink: 0;
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), background 220ms ease, color 220ms ease, border-color 220ms ease;
+  }
+  .cos-sec-icon svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  button:hover > .cos-sec-icon,
+  a:hover > .cos-sec-icon,
+  .active > .cos-sec-icon {
+    background: rgba(99, 102, 241, 0.22);
+    border-color: rgba(129, 140, 248, 0.55);
+    color: #a5b4fc;
+    transform: translateY(-1px) scale(1.04);
+  }
+</style>
+
+</head>
+<body class="post-login-bg cos-luffy-bg">
+  <div class="shell">
+    <aside class="left-rail">
+      <div class="lit motion-card">
+        <div class="motion-stage" id="motionStage">
+          <div class="motion-bg-anim"></div>
+          <div class="motion-overlay" style="justify-content:flex-start;">
+            <div class="motion-top" style="justify-content:flex-end;">
+              <button
+                type="button"
+                id="dockMenuTrigger"
+                class="dock-trigger"
+                aria-expanded="false"
+                aria-controls="sectionDrawer"
+                title="Open Sections Menu"
+              >
+                
+                <span class="dock-lines" aria-hidden="true">
+                  <i class="line-zero"></i>
+                  <i></i>
+                  <i></i>
+                </span>
+              </button>
+            </div>
+<span id="motionLabel" style="display:none;"></span>
+          </div>
+        </div>
+      </div>
+
+      <nav id="sectionDrawer" class="lit section-drawer" aria-label="Studio Sections">
+        <div class="drawer-inner">
+          <button type="button" class="sec-btn active" data-sec="overview">
+            <span>1. Overview &amp; Analytics</span>
+            <span class="sec-num">01</span>
+          </button>
+          <button type="button" class="sec-btn" data-sec="studio">
+            <span>2. Create Short (Studio)</span>
+            <span class="sec-num">02</span>
+          </button>
+          <button type="button" class="sec-btn" data-sec="viral">
+            <span>3. Viral Moment Intelligence</span>
+            <span class="sec-num">03</span>
+          </button>
+          <button type="button" class="sec-btn" data-sec="subtitles">
+            <span>4. Advanced Subtitle Studio</span>
+            <span class="sec-num">04</span>
+          </button>
+          <button type="button" class="sec-btn" data-sec="sound">
+            <span>5. Smart Sound Director</span>
+            <span class="sec-num">05</span>
+          </button>
+          <button type="button" class="sec-btn" data-sec="thumbnails">
+            <span>6. AI Thumbnail &amp; Director</span>
+            <span class="sec-num">06</span>
+          </button>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="workspace">
+      <header class="lit topbar">
+        <div>
+          <h1 id="topTitle">1. Overview &amp; Analytics</h1>
+          <p id="topSub">Welcome back ? open the docked trigger on the motion card to switch sections.</p>
+        </div>
+        <button type="button" id="openStudioBtn" class="btn-grad">Create Short</button>
+      </header>
+
+      <div id="stageArena" class="stage-arena">
+        <section class="lit portrait-showcase" aria-label="Portrait Section Frame">
+          <div class="portrait-frame">
+            <div class="portrait-motion-layer"></div>
+            <div class="portrait-top-bar">
+              <span class="portrait-badge" id="portraitTag">PORTRAIT ? 01</span>
+              <button
+                type="button"
+                id="portraitCloseBtn"
+                class="portrait-close-btn"
+                aria-label="Close section with motion"
+                title="Close section (280ms motion)"
+              >?</button>
+            </div>
+            <div class="portrait-meta">
+              <strong id="portraitTitle">1. Overview &amp; Analytics</strong>
+              <div style="color:var(--muted);margin-top:3px;" id="portraitHint">Active frame beside section</div>
+            </div>
+          </div>
+        </section>
+
+        <section id="activeSectionPanel" class="lit active-page-card">
+          <div class="page-head">
+            <h2 id="panelHeading">1. Overview &amp; Analytics</h2>
+            <span style="font-size:0.78rem;color:var(--accent-2);" id="panelBadge">Active Section</span>
+          </div>
+          <div id="panelBody"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      const trigger = document.getElementById("dockMenuTrigger");
+      const drawer = document.getElementById("sectionDrawer");
+      const panel = document.getElementById("activeSectionPanel");
+      const arena = document.getElementById("stageArena");
+      const closeBtn = document.getElementById("portraitCloseBtn");
+      const openStudioBtn = document.getElementById("openStudioBtn");
+      const secButtons = Array.from(document.querySelectorAll(".sec-btn[data-sec]"));
+
+      let projectsCache = [];
+
+      const sections = {
+        overview: {
+          num: "01",
+          title: "1. Overview & Analytics",
+          sub: "Greeting, metrics, queue & jobs, storage, weekly/monthly charts, quick actions, feed, AI tips & guide.",
+          render: () => {
+            const total = projectsCache.length;
+            const clips = projectsCache.reduce((a, p) => a + (Array.isArray(p.clips) ? p.clips.length : (p.clips_count || 0)), 0);
+            const exportsCount = projectsCache.reduce((a, p) => a + (p.exports_count || ((p.status || "").toLowerCase() === "completed" ? 1 : 0)), 0);
+            const hoursSaved = Math.max(1, (clips * 0.35 + total * 0.4)).toFixed(1);
+            const activeJobs = projectsCache.filter(p => ["processing","queued","running"].includes((p.status || "").toLowerCase()));
+            const failedJobs = projectsCache.filter(p => ["failed","error"].includes((p.status || "").toLowerCase()));
+            const favs = JSON.parse(localStorage.getItem("cos_fav_projects") || "[]");
+            const recentList = total ? projectsCache.slice(0, 4) : [];
+
+            return `
+              <!-- 1. Welcome / personalized greeting + 14. Quick Create Clip + 15. Quick Upload -->
+              <div class="ov-card" style="margin-bottom:14px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                  <div>
+                    <strong style="font-size:0.98rem;">1. Welcome back, Creator</strong>
+                    <div style="color:var(--muted);font-size:0.8rem;margin-top:2px;">Personal studio hub ready for batch clipping and exports.</div>
+                  </div>
+                  <div class="ov-actions" style="margin-top:0;">
+                    <button type="button" class="ov-btn-sm" id="ovQuickCreateBtn">14. Quick Create Clip</button>
+                    <button type="button" class="ov-btn-sm" id="ovQuickUploadBtn">15. Quick Upload</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. Total videos processed | 3. Total clips generated | 4. Total processing hours saved | 5. Total exports -->
+              <div class="ov-grid-4">
+                <div class="ov-card"><div class="ov-label"><span>2. Videos Processed</span><span>?</span></div><div class="ov-num">${total}</div></div>
+                <div class="ov-card"><div class="ov-label"><span>3. Clips Generated</span><span>?</span></div><div class="ov-num">${clips}</div></div>
+                <div class="ov-card"><div class="ov-label"><span>4. Hours Saved</span><span>?</span></div><div class="ov-num">${hoursSaved}h</div></div>
+                <div class="ov-card"><div class="ov-label"><span>5. Total Exports</span><span>?</span></div><div class="ov-num">${exportsCount}</div></div>
+              </div>
+
+              <!-- 6. Recent projects & 7. Recent generated clips -->
+              <div class="ov-grid-2">
+                <div class="ov-card">
+                  <div class="ov-label"><strong>6. Recent Projects</strong><span>${total} total</span></div>
+                  ${recentList.length ? recentList.map(p => {
+                    const id = String(p.id || p.title || p.name || "");
+                    const isFav = favs.includes(id);
+                    return `<div class="ov-item-row"><span><strong>${p.title || p.name || id || "Project"}</strong> <span style="color:var(--muted);">(${p.status || "ready"})</span></span><button type="button" class="ov-btn-sm" data-fav="${encodeURIComponent(id)}">${isFav ? "? Fav" : "? Fav"}</button></div>`;
+                  }).join("") : `<div class="ov-item-row"><span style="color:var(--muted);">No recent projects yet.</span></div>`}
+                </div>
+                <div class="ov-card">
+                  <div class="ov-label"><strong>7. Recent Generated Clips</strong><span>${clips} clips</span></div>
+                  <div class="ov-item-row"><span>Latest vertical highlight batch (9:16)</span><span style="color:var(--accent-2);">${clips ? clips + " ready" : "Awaiting render"}</span></div>
+                  <div class="ov-item-row"><span>Auto-captioned short draft</span><span style="color:var(--muted);">Ready to review</span></div>
+                </div>
+              </div>
+
+              <!-- 8. Processing queue | 9. Active AI jobs | 10. Failed jobs and retry button -->
+              <div class="ov-grid-3">
+                <div class="ov-card">
+                  <div class="ov-label"><strong>8. Processing Queue</strong><span>FIFO</span></div>
+                  <div class="ov-num">${activeJobs.length}</div>
+                  <div style="color:var(--muted);font-size:0.76rem;margin-top:4px;">Queued jobs waiting for worker slot.</div>
+                </div>
+                <div class="ov-card">
+                  <div class="ov-label"><strong>9. Active AI Jobs</strong><span>Live</span></div>
+                  <div class="ov-num">${activeJobs.length}</div>
+                  <div style="color:var(--muted);font-size:0.76rem;margin-top:4px;">Scene, viral hook &amp; caption passes.</div>
+                </div>
+                <div class="ov-card">
+                  <div class="ov-label"><strong>10. Failed Jobs</strong><span>${failedJobs.length}</span></div>
+                  <div class="ov-num">${failedJobs.length}</div>
+                  <div class="ov-actions"><button type="button" class="ov-btn-sm" id="ovRetryFailedBtn">Retry Failed</button><span id="ovRetryMsg" style="font-size:0.74rem;color:var(--accent-2);"></span></div>
+                </div>
+              </div>
+
+              <!-- 11. Storage usage | 12. Weekly activity chart | 13. Monthly usage analytics -->
+              <div class="ov-grid-3">
+                <div class="ov-card">
+                  <div class="ov-label"><strong>11. Storage Usage</strong><span>42% of 50 GB</span></div>
+                  <div class="ov-num">21.0 GB</div>
+                  <div class="ov-meter"><i></i></div>
+                </div>
+                <div class="ov-card">
+                  <div class="ov-label"><strong>12. Weekly Activity</strong><span>Mon?Sun</span></div>
+                  <div class="ov-bars" aria-hidden="true">
+                    <div class="ov-bar" style="height:40%"></div>
+                    <div class="ov-bar" style="height:65%"></div>
+                    <div class="ov-bar" style="height:50%"></div>
+                    <div class="ov-bar" style="height:85%"></div>
+                    <div class="ov-bar" style="height:70%"></div>
+                    <div class="ov-bar" style="height:95%"></div>
+                    <div class="ov-bar" style="height:60%"></div>
+                  </div>
+                </div>
+                <div class="ov-card">
+                  <div class="ov-label"><strong>13. Monthly Analytics</strong><span>This Month</span></div>
+                  <div class="ov-num">${Math.max(12, clips * 2)} clips</div>
+                  <div style="color:var(--muted);font-size:0.76rem;margin-top:4px;">Avg retention score: 88% ? 9:16 top format.</div>
+                </div>
+              </div>
+
+              <!-- 16. Recent activity timeline | 17. AI recommendations | 18. System notifications -->
+              <div class="ov-grid-3">
+                <div class="ov-card">
+                  <div class="ov-label"><strong>16. Activity Timeline</strong><span>Today</span></div>
+                  <div class="ov-item-row"><span>Workspace synced &amp; projects loaded</span></div>
+                  <div class="ov-item-row"><span>Portrait 9:16 frame active</span></div>
+                </div>
+                <div class="ov-card">
+                  <div class="ov-label"><strong>17. AI Recommendations</strong><span>Smart</span></div>
+                  <div class="ov-item-row"><span>Trim dead air &amp; boost first 3s hook</span></div>
+                  <div class="ov-item-row"><span>Enable word-by-word captions</span></div>
+                </div>
+                <div class="ov-card">
+                  <div class="ov-label"><strong>18. System Notifications</strong><span>All OK</span></div>
+                  <div class="ov-item-row"><span>Renderer &amp; storage pipelines healthy</span></div>
+                  <div class="ov-item-row"><span>No critical alerts</span></div>
+                </div>
+              </div>
+
+              <!-- 19. Favorite projects & 20. Getting Started guide -->
+              <div class="ov-grid-2" style="margin-bottom:0;">
+                <div class="ov-card">
+                  <div class="ov-label"><strong>19. Favorite Projects</strong><span>${favs.length} starred</span></div>
+                  <div class="ov-item-row"><span style="color:var(--muted);">${favs.length ? "Starred: " + favs.join(", ") : "Click ? Fav on any recent project to pin it here."}</span></div>
+                </div>
+                <div class="ov-card">
+                  <div class="ov-label"><strong>20. Getting Started Guide</strong><span>3 Steps</span></div>
+                  <div class="ov-item-row"><span>1. Open Create Short ? 2. Import URL/Video ? 3. Generate &amp; Export</span></div>
+                </div>
+              </div>
+            `;
+          }
+        },
+        studio: {
+          num: "02",
+          title: "2. Create Short (Core Studio)",
+          sub: "Upload/URL/batch/YouTube/Twitch/Kick/local import, timeline, clipping & ratios.",
+          render: () => `
+            <div class="grid-2">
+              <div class="sub-box">
+                <h3>Import &amp; Generate</h3>
+                <div class="field"><label for="videoUrl">Video URL (YouTube / Twitch / Kick / Direct)</label><input id="videoUrl" type="url" placeholder="https://..." /></div>
+                <div class="field"><label for="videoFile">Upload / Batch Local Video</label><input id="videoFile" type="file" accept="video/*" multiple /></div>
+                <div class="field"><label for="clipAspect">Aspect Ratio</label><select id="clipAspect"><option value="9:16">9:16 Vertical (Shorts / Reels)</option><option value="16:9">16:9 Landscape</option><option value="1:1">1:1 Square</option></select></div>
+                <button type="button" id="startBtn" class="btn-grad" style="width:100%;justify-content:center;">Generate Viral Clips</button>
+              </div>
+              <div class="sub-box">
+                <h3>Timeline &amp; Clip Controls</h3>
+                <p>Preview player, scene/highlight/viral detection, multi-clip, custom/start-end/manual/auto clipping, trim/crop/resize, reorder/duplicate/merge/delete, frame-by-frame, speed &amp; autosave.</p>
+                <div class="project-list" id="projectList" style="margin-top:10px;">
+                  ${projectsCache.length ? projectsCache.slice(0, 5).map(p => `<div class="project-item"><strong>${p.title || p.name || p.id || "Project"}</strong></div>`).join("") : `<div class="project-item">Projects sync automatically from /api/projects.</div>`}
+                </div>
+              </div>
+            </div>
+          `
+        },
+        viral: {
+          num: "03",
+          title: "3. Viral Moment Intelligence",
+          sub: "Viral scoring, emotion/reaction/gameplay/story detection, hooks & silence removal.",
+          render: () => `
+            <div class="grid-3">
+              <div class="sub-box"><h3>Moment &amp; Reaction Signals</h3><ul class="cap-list"><li>Viral potential &amp; quality score</li><li>Funny, emotional &amp; unexpected moments</li><li>Rage, exciting gameplay &amp; controversy</li><li>Storytelling, key talks &amp; loud reactions</li></ul></div>
+              <div class="sub-box"><h3>Face, Voice &amp; Pacing AI</h3><ul class="cap-list"><li>Facial expression &amp; speaker emotion</li><li>Audience reaction detection</li><li>Silence detection &amp; dead-air removal</li><li>Hook identification &amp; highlight rank</li></ul></div>
+              <div class="sub-box"><h3>Smart Selection</h3><ul class="cap-list"><li>Best moment recommendations</li><li>Duplicate moment filtering</li><li>Context-aware picks &amp; explanations</li></ul></div>
+            </div>
+          `
+        },
+        subtitles: {
+          num: "04",
+          title: "4. Advanced Subtitle Studio",
+          sub: "ASR, word-by-word/karaoke captions, styling, multi-speaker, translation & SRT.",
+          render: () => `
+            <div class="grid-3">
+              <div class="sub-box"><h3>Captions &amp; Motion</h3><ul class="cap-list"><li>Automatic speech recognition (ASR)</li><li>Word-by-word, animated &amp; karaoke</li><li>Keyword highlights &amp; emoji integration</li><li>Auto punctuation &amp; safe zones</li></ul></div>
+              <div class="sub-box"><h3>Typography &amp; Styling</h3><ul class="cap-list"><li>Custom fonts, size &amp; positioning</li><li>Colors, text stroke, shadow &amp; boxes</li><li>Caption templates &amp; subtitle presets</li></ul></div>
+              <div class="sub-box"><h3>Speakers, Languages &amp; SRT</h3><ul class="cap-list"><li>Multi-speaker ID &amp; speaker colors</li><li>Timing editor &amp; manual text fixes</li><li>Multilingual &amp; subtitle translation</li><li>Import / export SRT</li></ul></div>
+            </div>
+          `
+        },
+        sound: {
+          num: "05",
+          title: "5. Smart Sound Director",
+          sub: "AI SFX, music & ducking, voice enhancement, noise cleanup & audio presets.",
+          render: () => `
+            <div class="grid-3">
+              <div class="sub-box"><h3>Sound Effects</h3><ul class="cap-list"><li>AI SFX &amp; scene/reaction triggers</li><li>Funny, gaming, meme, whoosh &amp; impact</li><li>SFX timeline, replace or remove SFX</li></ul></div>
+              <div class="sub-box"><h3>Music &amp; Voice Polish</h3><ul class="cap-list"><li>Music suggestions &amp; volume control</li><li>Automatic audio ducking</li><li>Voice enhance, noise reduction &amp; norm</li></ul></div>
+              <div class="sub-box"><h3>Library &amp; Presets</h3><ul class="cap-list"><li>Upload custom sound library</li><li>Instant sound preview</li><li>Custom audio presets</li></ul></div>
+            </div>
+          `
+        },
+        thumbnails: {
+          num: "06",
+          title: "6. AI Thumbnail & Director Mode",
+          sub: "AI thumbnails, face-aware framing, A/B testing, AI Director & workflow automation.",
+          render: () => `
+            <div class="grid-3">
+              <div class="sub-box"><h3>AI Thumbnail Studio</h3><ul class="cap-list"><li>AI thumbnail &amp; background selection</li><li>Subject &amp; face-aware composition</li><li>AI text, fonts, colors, glow/outline/blur</li></ul></div>
+              <div class="sub-box"><h3>Variations &amp; Export</h3><ul class="cap-list"><li>Custom upload, templates &amp; variations</li><li>Live preview, manual editor &amp; A/B test</li><li>One-click thumbnail download</li></ul></div>
+              <div class="sub-box"><h3>Director &amp; Automation</h3><ul class="cap-list"><li>AI Director Mode editing decisions</li><li>Automated creator workflow rules</li><li>Optimization &amp; clip performance loop</li></ul></div>
+            </div>
+          `
+        }
+      };
+
+      function setDrawerOpen(isOpen) {
+        drawer.classList.toggle("open", isOpen);
+        trigger.classList.toggle("is-open", isOpen);
+        trigger.setAttribute("aria-expanded", String(isOpen));
+        document.body.classList.toggle("bg-blurred", isOpen);
+        panel.classList.toggle("section-lit", isOpen);
+        const lbl = document.getElementById("motionLabel");
+        if (lbl) lbl.textContent = isOpen ? "Line 0 ? Drawer Open" : "Tap trigger for sections";
+      }
+
+      function activateSection(key) {
+        const sec = sections[key] || sections.overview;
+        secButtons.forEach(b => b.classList.toggle("active", b.dataset.sec === key));
+
+        document.getElementById("topTitle").textContent = sec.title;
+        document.getElementById("topSub").textContent = sec.sub;
+        document.getElementById("panelHeading").textContent = sec.title;
+        document.getElementById("portraitTag").textContent = `PORTRAIT ? ${sec.num}`;
+        document.getElementById("portraitTitle").textContent = sec.title;
+
+        panel.classList.add("entering");
+        setTimeout(() => {
+          document.getElementById("panelBody").innerHTML = sec.render();
+          panel.classList.remove("entering");
+        }, 90);
+      }
+
+      function closeWithMotion() {
+        setDrawerOpen(false);
+        arena.classList.add("closing");
+        setTimeout(() => {
+          activateSection("overview");
+          arena.classList.remove("closing");
+        }, 220);
+      }
+
+      trigger.addEventListener("click", () => {
+        setDrawerOpen(!drawer.classList.contains("open"));
+      });
+
+      secButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          activateSection(btn.dataset.sec);
+          setDrawerOpen(false);
+        });
+      });
+
+      openStudioBtn.addEventListener("click", () => {
+        activateSection("studio");
+        setDrawerOpen(false);
+      });
+
+      closeBtn.addEventListener("click", closeWithMotion);
+
+      async function syncProjects() {
+        try {
+          const res = await fetch("/api/projects", { credentials: "include" });
+          if (!res.ok) return;
+          const data = await res.json();
+          projectsCache = Array.isArray(data) ? data : (data.projects || []);
+          const activeKey = document.querySelector(".sec-btn.active")?.dataset.sec || "overview";
+          if (activeKey === "overview" || activeKey === "studio") {
+            document.getElementById("panelBody").innerHTML = sections[activeKey].render();
+          }
+        } catch (_) {}
+      }
+
+      activateSection("overview");
+      syncProjects();
+    })();
+  </script>
+
+<script id="cos-luffy-3line-trigger-script">
+(function () {
+  function syncBlur() {
+    const trig = document.getElementById("dockMenuTrigger");
+    const drw = document.getElementById("sectionDrawer");
+    const open = drw ? drw.classList.contains("open") : (trig ? trig.classList.contains("is-open") : false);
+    document.body.classList.toggle("bg-blurred", Boolean(open));
+  }
+  document.addEventListener("click", (ev) => {
+    const btn = ev.target instanceof Element ? ev.target.closest("#dockMenuTrigger") : null;
+    if (btn) setTimeout(syncBlur, 10);
+  });
+  syncBlur();
+})();
+</script>
+
+
+
+
+<script id="cos-luffy-png-script">
+(function () {
+  document.body.classList.remove("bg-blurred");
+  document.body.classList.remove("luffy-3line-blurred");
+
+  let layer = document.getElementById("cosLuffyBgLayer");
+  if (!layer) {
+    layer = document.createElement("div");
+    layer.id = "cosLuffyBgLayer";
+    layer.setAttribute("aria-hidden", "true");
+    document.body.prepend(layer);
+  }
+
+  document.addEventListener("click", (e) => {
+    const trig = e.target instanceof Element ? e.target.closest("#dockMenuTrigger") : null;
+    if (!trig) return;
+    document.body.classList.toggle("luffy-3line-blurred");
+  });
+})();
+</script>
+
+
+<script id="cos-6-icons-script">
+(function () {
+  // Scalable icon registry (1..6). Add more entries here whenever you add new sections.
+  window.COS_SECTION_ICONS = [
+    // 1. Overview / Command Center
+    '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+    // 2. Create Short / Core Studio
+    '<svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="M10 9.5l5 2.5-5 2.5z"/><path d="M8 3v3M16 3v3M8 18v3M16 18v3"/></svg>',
+    // 3. Clips & Media Library
+    '<svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M10 12l4 2-4 2z"/></svg>',
+    // 4. Analytics & Performance
+    '<svg viewBox="0 0 24 24"><path d="M4 19h16"/><path d="M7 15v-4"/><path d="M12 15V7"/><path d="M17 15v-6"/></svg>',
+    // 5. Auto-Publish & Schedule
+    '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M9 15l2 2 4-4"/></svg>',
+    // 6. Account, Billing & Settings
+    '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
+  ];
+
+  function attachIcons() {
+    const selectors = [
+      "#sectionDrawer button",
+      "#sectionDrawer a",
+      ".left-rail button[data-section]",
+      ".left-rail .nav-item",
+      "[data-tab]"
+    ];
+    const items = document.querySelectorAll(selectors.join(", "));
+    let idx = 0;
+    items.forEach((el) => {
+      if (el.id === "dockMenuTrigger" || el.querySelector(".cos-sec-icon")) return;
+      const svg = window.COS_SECTION_ICONS[idx % window.COS_SECTION_ICONS.length];
+      const badge = document.createElement("span");
+      badge.className = "cos-sec-icon";
+      badge.setAttribute("aria-hidden", "true");
+      badge.innerHTML = svg;
+      el.prepend(badge);
+      idx++;
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", attachIcons);
+  } else {
+    attachIcons();
+  }
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,779 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — AI Clipping OS</title>
+  <style>
+    :root {
+      --bg: #07090e;
+      --panel: rgba(15, 20, 32, 0.78);
+      --panel-2: rgba(24, 31, 48, 0.86);
+      --border: rgba(99, 102, 241, 0.32);
+      --text: #f3f5f8;
+      --muted: #94a3b8;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --gold: #facc15;
+      --red: #f87171;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: hidden;
+      position: relative;
+    }
+    #bgVideo {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      pointer-events: none;
+      filter: brightness(0.55) saturate(1.15);
+    }
+    .video-vignette {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(7, 9, 14, 0.25) 0%, rgba(7, 9, 14, 0.82) 100%);
+      z-index: 0;
+      pointer-events: none;
+    }
+    #bgCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      display: none;
+    }
+    .auth-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 415px;
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 30px 30px 22px;
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    .pill-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: rgba(250, 204, 21, 0.12);
+      border: 1px solid rgba(250, 204, 21, 0.3);
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 8px var(--gold);
+      animation: pulse 1.6s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+    .logo { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 4px; }
+    .sub { font-size: 0.86rem; color: var(--muted); margin-bottom: 22px; }
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      background: rgba(11, 14, 23, 0.72);
+      padding: 4px;
+      border-radius: 11px;
+      margin-bottom: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .tab-btn {
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .tab-btn.active { background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4); }
+    label { display: block; font-size: 0.8rem; color: var(--muted); margin: 12px 0 6px; }
+    input {
+      width: 100%;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 11px 13px;
+      font-size: 0.9rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.22);
+    }
+    .submit-btn {
+      width: 100%;
+      margin-top: 22px;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(79, 70, 229, 0.35);
+      transition: transform 0.15s, box-shadow 0.2s;
+    }
+    .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 14px 28px rgba(79, 70, 229, 0.5); }
+    .err { color: var(--red); font-size: 0.82rem; margin-top: 10px; min-height: 16px; }
+    .ok-msg { color: #4ade80; font-size: 0.82rem; margin-top: 10px; min-height: 16px; }
+    .pw-row { display: flex; align-items: center; justify-content: space-between; margin: 12px 0 6px; }
+    .pw-row label { margin: 0; }
+    .link-btn { background: none; border: none; color: #a5b4fc; font-size: 0.78rem; font-weight: 600; cursor: pointer; padding: 0; }
+    .link-btn:hover { color: #fff; text-decoration: underline; }
+    .hidden { display: none !important; }
+    .code-banner { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(250, 204, 21, 0.12); border: 1px solid rgba(250, 204, 21, 0.35); color: #fef08a; font-size: 0.82rem; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .code-banner strong { font-size: 1.05rem; letter-spacing: 0.16em; color: #fff; }
+    .back-row { margin-top: 12px; text-align: center; }
+
+    .credits-bar {
+      margin-top: 16px;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      text-align: center;
+    }
+    .dc-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99, 102, 241, 0.16);
+      border: 1px solid rgba(99, 102, 241, 0.38);
+      color: #c7d2fe;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .dc-chip:hover {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.28);
+    }
+    .dc-chip strong { color: #fff; font-weight: 700; }
+    .copy-tag {
+      font-size: 0.68rem;
+      background: rgba(255, 255, 255, 0.12);
+      padding: 2px 6px;
+      border-radius: 6px;
+      color: var(--muted);
+    }
+    .made-by {
+      font-size: 0.76rem;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .made-by span {
+      color: var(--gold);
+      font-weight: 700;
+    }
+  </style>
+
+<style id="cos-login-motion-style">
+  /* 1. Personalized Welcome Shade Intro Overlay */
+  #cosWelcomeIntro {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 50% 45%, rgba(20, 24, 42, 0.96), rgba(7, 9, 16, 0.99));
+    pointer-events: none;
+    animation: cosIntroFadeOut 0.85s cubic-bezier(0.22, 1, 0.36, 1) 2.5s forwards;
+  }
+  .cos-welcome-eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: rgba(165, 180, 252, 0.85);
+    margin-bottom: 12px;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: cosFadeUp 0.65s ease 0.15s forwards;
+  }
+  .cos-welcome-title {
+    font-size: clamp(28px, 4.5vw, 52px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0;
+    background: linear-gradient(110deg, #475569 0%, #f8fafc 38%, #818cf8 52%, #f8fafc 66%, #475569 100%);
+    background-size: 240% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    opacity: 0;
+    transform: translateY(14px);
+    animation:
+      cosFadeUp 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.25s forwards,
+      cosShadeSweep 2.1s cubic-bezier(0.22, 1, 0.36, 1) 0.3s forwards;
+  }
+  .cos-welcome-sub {
+    margin-top: 10px;
+    font-size: 14px;
+    color: rgba(203, 213, 225, 0.72);
+    opacity: 0;
+    animation: cosFadeUp 0.65s ease 0.6s forwards;
+  }
+
+  @keyframes cosFadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes cosShadeSweep {
+    0% { background-position: 120% 0; }
+    100% { background-position: -40% 0; }
+  }
+  @keyframes cosIntroFadeOut {
+    to { opacity: 0; visibility: hidden; }
+  }
+
+  /* 2. Right-Corner Professional Geometric Feature Box */
+  #cosFeatureDock {
+    position: fixed;
+    right: 26px;
+    bottom: 26px;
+    width: 310px;
+    z-index: 40;
+    padding: 18px 20px;
+    background: linear-gradient(155deg, rgba(17, 22, 38, 0.84), rgba(10, 13, 24, 0.92));
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 18px 4px 18px 18px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: #e2e8f0;
+    font-family: inherit;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  #cosFeatureDock.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .cos-fd-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .cos-fd-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #a5b4fc;
+  }
+  .cos-fd-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #34d399;
+    box-shadow: 0 0 10px rgba(52, 211, 153, 0.8);
+  }
+  .cos-fd-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .cos-fd-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 12.5px;
+    color: rgba(226, 232, 240, 0.9);
+    opacity: 0;
+    transform: translateX(8px);
+    transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .cos-fd-item.show {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .cos-fd-bullet {
+    width: 6px;
+    height: 6px;
+    border-radius: 2px;
+    background: #818cf8;
+    flex-shrink: 0;
+  }
+
+  /* Cycling scroll-fade ticker inside the feature dock */
+  .cos-fd-cycle-wrap {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    height: 36px;
+    overflow: hidden;
+    position: relative;
+  }
+  .cos-fd-cycle-item {
+    position: absolute;
+    inset: 12px 0 0 0;
+    font-size: 12px;
+    color: #93c5fd;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .cos-fd-cycle-item.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .cos-fd-cycle-item.exit {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+
+  /* 3. Left Corner Account Login Info Icon */
+  /* Tip: swap bottom: 26px -> top: 26px if you prefer top-left */
+  #cosAccountInfoWrap {
+    position: fixed;
+    left: 26px;
+    bottom: 26px;
+    z-index: 45;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  #cosAccountInfoBtn {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: linear-gradient(145deg, rgba(22, 28, 48, 0.88), rgba(11, 15, 28, 0.94));
+    color: #e2e8f0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  #cosAccountInfoBtn:hover {
+    transform: translateY(-2px);
+    border-color: rgba(129, 140, 248, 0.65);
+    box-shadow: 0 14px 32px rgba(99, 102, 241, 0.25);
+  }
+  #cosAccountPopover {
+    width: 240px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(12, 16, 29, 0.95);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+    color: #e2e8f0;
+    font-size: 12px;
+    display: none;
+  }
+  #cosAccountPopover.open {
+    display: block;
+    animation: cosFadeUp 0.25s ease forwards;
+  }
+  .cos-acc-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    color: rgba(203, 213, 225, 0.78);
+  }
+  .cos-acc-row strong {
+    color: #f8fafc;
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    #cosFeatureDock { display: none; }
+  }
+</style>
+
+</head>
+<body>
+  <video id="bgVideo" autoplay muted loop playsinline src="/media/bg/login_bg.mp4?v=3" onerror="fallbackToCanvas()"></video>
+  <div class="video-vignette"></div>
+  <canvas id="bgCanvas"></canvas>
+
+  <div class="auth-card">
+    <div class="pill-tag"><span class="pulse-dot"></span> AI Viral Clip Engine</div>
+    <div class="logo">AI Clipping OS</div>
+    <div class="sub">Turn long-form videos into viral 9:16 shorts in minutes</div>
+
+    <div class="tabs" id="authTabs">
+      <button class="tab-btn active" id="tabLogin" onclick="setMode('login')">Sign In</button>
+      <button class="tab-btn" id="tabReg" onclick="setMode('register')">Create Account</button>
+    </div>
+
+    <form id="authForm" onsubmit="submitAuth(event)">
+      <label for="email">Email or Username</label>
+      <input id="email" type="text" placeholder="creator@aiclipping.local" required autocomplete="username" />
+
+      <div class="pw-row">
+        <label for="password">Password</label>
+        <button type="button" class="link-btn" id="forgotLink" onclick="openForgotMode()">Forgot password?</button>
+      </div>
+      <input id="password" type="password" placeholder="Enter your password" required autocomplete="current-password" />
+
+      <button class="submit-btn" id="submitBtn" type="submit">Sign In</button>
+      <div class="err" id="errBox"></div>
+    </form>
+
+    <div id="forgotPanel" class="hidden">
+      <form id="forgotReqForm" onsubmit="requestResetCode(event)">
+        <label for="resetEmail">Account Email or Username</label>
+        <input id="resetEmail" type="text" placeholder="creator@aiclipping.local" required />
+        <button class="submit-btn" id="sendCodeBtn" type="submit">Get 6-Digit Reset Code</button>
+      </form>
+
+      <div id="codeBanner" class="code-banner hidden">
+        <span>Your 6-digit reset code:</span>
+        <strong id="generatedCodeText">------</strong>
+      </div>
+
+      <form id="forgotResetForm" class="hidden" onsubmit="submitResetPassword(event)">
+        <label for="resetCode">6-Digit Verification Code</label>
+        <input id="resetCode" type="text" inputmode="numeric" maxlength="6" placeholder="123456" required />
+
+        <label for="newPassword">New Password (min 6 chars)</label>
+        <input id="newPassword" type="password" minlength="6" placeholder="Enter new password" required autocomplete="new-password" />
+
+        <button class="submit-btn" id="resetPwBtn" type="submit">Reset Password & Sign In</button>
+      </form>
+
+      <div class="err" id="forgotErrBox"></div>
+      <div class="ok-msg" id="forgotOkBox"></div>
+      <div class="back-row">
+        <button type="button" class="link-btn" onclick="closeForgotMode()">? Back to Sign In</button>
+      </div>
+    </div>
+
+    <div class="credits-bar">
+      <button type="button" class="dc-chip" onclick="copyDiscord()" title="Click to copy Discord username">
+        <span>CONTACT DC :</span> <strong>lapizoa</strong> <span id="copyBadge" class="copy-tag">Copy</span>
+      </button>
+      <div class="made-by">MADE BY : <span>Whiskeyy.OG</span></div>
+    </div>
+  </div>
+
+  <script>
+    let mode = "login";
+    function setMode(next) {
+      mode = next;
+      document.getElementById("tabLogin").classList.toggle("active", next === "login");
+      document.getElementById("tabReg").classList.toggle("active", next === "register");
+      document.getElementById("submitBtn").textContent = next === "login" ? "Sign In" : "Create Account";
+      document.getElementById("forgotLink").classList.toggle("hidden", next !== "login");
+      document.getElementById("errBox").textContent = "";
+    }
+
+    function openForgotMode() {
+      document.getElementById("authTabs").classList.add("hidden");
+      document.getElementById("authForm").classList.add("hidden");
+      document.getElementById("forgotPanel").classList.remove("hidden");
+      document.getElementById("forgotErrBox").textContent = "";
+      document.getElementById("forgotOkBox").textContent = "";
+      const typed = document.getElementById("email").value.trim();
+      if (typed) document.getElementById("resetEmail").value = typed;
+    }
+
+    function closeForgotMode() {
+      document.getElementById("forgotPanel").classList.add("hidden");
+      document.getElementById("codeBanner").classList.add("hidden");
+      document.getElementById("forgotResetForm").classList.add("hidden");
+      document.getElementById("authTabs").classList.remove("hidden");
+      document.getElementById("authForm").classList.remove("hidden");
+      document.getElementById("forgotErrBox").textContent = "";
+      document.getElementById("forgotOkBox").textContent = "";
+      setMode("login");
+    }
+
+    async function requestResetCode(e) {
+      e.preventDefault();
+      const err = document.getElementById("forgotErrBox");
+      const ok = document.getElementById("forgotOkBox");
+      const btn = document.getElementById("sendCodeBtn");
+      err.textContent = "";
+      ok.textContent = "";
+      btn.disabled = true;
+      btn.textContent = "Generating Code...";
+      try {
+        const email = document.getElementById("resetEmail").value.trim();
+        const res = await fetch("/api/auth/forgot-password/request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Could not generate reset code");
+        document.getElementById("generatedCodeText").textContent = data.reset_code;
+        document.getElementById("resetCode").value = data.reset_code;
+        document.getElementById("codeBanner").classList.remove("hidden");
+        document.getElementById("forgotResetForm").classList.remove("hidden");
+        ok.textContent = `Code active for ${data.email} (expires in 10 min). Enter your new password below.`;
+      } catch (ex) {
+        err.textContent = ex.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Get 6-Digit Reset Code";
+      }
+    }
+
+    async function submitResetPassword(e) {
+      e.preventDefault();
+      const err = document.getElementById("forgotErrBox");
+      const ok = document.getElementById("forgotOkBox");
+      const btn = document.getElementById("resetPwBtn");
+      err.textContent = "";
+      ok.textContent = "";
+      btn.disabled = true;
+      btn.textContent = "Updating Password...";
+      try {
+        const email = document.getElementById("resetEmail").value.trim();
+        const code = document.getElementById("resetCode").value.trim();
+        const new_password = document.getElementById("newPassword").value;
+        const res = await fetch("/api/auth/forgot-password/reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, code, new_password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Password reset failed");
+        ok.textContent = "Password updated! Redirecting to studio...";
+        window.location.href = data.redirect_to;
+      } catch (ex) {
+        err.textContent = ex.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Reset Password & Sign In";
+      }
+    }
+
+    function copyDiscord() {
+      navigator.clipboard?.writeText("lapizoa");
+      const badge = document.getElementById("copyBadge");
+      badge.textContent = "Copied ✓";
+      badge.style.color = "#4ade80";
+      setTimeout(() => {
+        badge.textContent = "Copy";
+        badge.style.color = "";
+      }, 1800);
+    }
+
+    async function submitAuth(e) {
+      e.preventDefault();
+      const errBox = document.getElementById("errBox");
+      errBox.textContent = "";
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const url = mode === "login" ? "/api/auth/login" : "/api/auth/register";
+
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Authentication failed");
+        window.location.href = data.redirect_to;
+      } catch (err) {
+        errBox.textContent = err.message;
+      }
+    }
+
+    function fallbackToCanvas() {
+      const vid = document.getElementById("bgVideo");
+      if (vid) vid.style.display = "none";
+      const canvas = document.getElementById("bgCanvas");
+      canvas.style.display = "block";
+      const ctx = canvas.getContext("2d");
+      let width = window.innerWidth, height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      const nodes = Array.from({ length: 36 }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.6,
+        vy: (Math.random() - 0.5) * 0.6
+      }));
+      function loop() {
+        ctx.clearRect(0, 0, width, height);
+        for (const n of nodes) {
+          n.x += n.vx; n.y += n.vy;
+          if (n.x < 0 || n.x > width) n.vx *= -1;
+          if (n.y < 0 || n.y > height) n.vy *= -1;
+          ctx.fillStyle = "rgba(99, 102, 241, 0.55)";
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        requestAnimationFrame(loop);
+      }
+      loop();
+    }
+  </script>
+
+<script id="cos-login-motion-script">
+(function () {
+  function getGreeting() {
+    const h = new Date().getHours();
+    if (h < 12) return "Good Morning";
+    if (h < 18) return "Good Afternoon";
+    return "Good Evening";
+  }
+
+  const savedEmail = localStorage.getItem("cos_last_email") || localStorage.getItem("email") || "Creator";
+  const displayName = savedEmail.includes("@") ? savedEmail.split("@")[0] : savedEmail;
+
+  // 1. Build Personalized Shade Welcome Overlay
+  const intro = document.createElement("div");
+  intro.id = "cosWelcomeIntro";
+  intro.innerHTML = `
+    <div class="cos-welcome-eyebrow">CLIPPING OS STUDIO</div>
+    <h1 class="cos-welcome-title">${getGreeting()}, ${displayName}</h1>
+    <div class="cos-welcome-sub">Preparing your motion-driven workspace...</div>
+  `;
+  document.body.appendChild(intro);
+  setTimeout(() => intro.remove(), 3500);
+
+  // 2. Build Right-Corner Feature Box (staggered list + cycling ticker)
+  const coreFeatures = [
+    "AI Viral Moment Detection",
+    "1-Click 9:16 Auto-Reframe",
+    "Dynamic Word-Level Captions",
+    "Multi-Platform Auto-Scheduler"
+  ];
+  const cycleFeatures = [
+    "? 4K GPU-Accelerated Exports",
+    "?? Hook Score & Retention Predictor",
+    "??? Studio Voice Cleanup & Subtitles",
+    "?? Real-Time Channel Analytics"
+  ];
+
+  const dock = document.createElement("aside");
+  dock.id = "cosFeatureDock";
+  dock.innerHTML = `
+    <div class="cos-fd-header">
+      <span class="cos-fd-badge">Workspace Capabilities</span>
+      <span class="cos-fd-dot" title="Engine Ready"></span>
+    </div>
+    <ul class="cos-fd-list">
+      ${coreFeatures.map(f => `<li class="cos-fd-item"><span class="cos-fd-bullet"></span><span>${f}</span></li>`).join("")}
+    </ul>
+    <div class="cos-fd-cycle-wrap">
+      ${cycleFeatures.map((f, i) => `<div class="cos-fd-cycle-item${i === 0 ? " active" : ""}">${f}</div>`).join("")}
+    </div>
+  `;
+  document.body.appendChild(dock);
+
+  // Reveal dock right as welcome fades away, then stagger-fade features list-by-list
+  setTimeout(() => {
+    dock.classList.add("is-visible");
+    const items = dock.querySelectorAll(".cos-fd-item");
+    items.forEach((el, idx) => {
+      setTimeout(() => el.classList.add("show"), 220 + idx * 240);
+    });
+  }, 2400);
+
+  // Cycle extra features with vertical scroll-fade
+  let cycleIdx = 0;
+  const cycleEls = dock.querySelectorAll(".cos-fd-cycle-item");
+  setInterval(() => {
+    if (!cycleEls.length) return;
+    const prev = cycleEls[cycleIdx];
+    prev.classList.remove("active");
+    prev.classList.add("exit");
+    setTimeout(() => prev.classList.remove("exit"), 600);
+
+    cycleIdx = (cycleIdx + 1) % cycleEls.length;
+    cycleEls[cycleIdx].classList.add("active");
+  }, 2800);
+
+  // 3. Build Left-Corner Account Login Info Icon
+  const accWrap = document.createElement("div");
+  accWrap.id = "cosAccountInfoWrap";
+  accWrap.innerHTML = `
+    <div id="cosAccountPopover" role="dialog" aria-label="Account Login Info">
+      <div style="font-weight:700;color:#a5b4fc;margin-bottom:8px;letter-spacing:0.06em;text-transform:uppercase;font-size:10.5px;">Account Login Info</div>
+      <div class="cos-acc-row"><span>Last User</span><strong>${savedEmail}</strong></div>
+      <div class="cos-acc-row"><span>Status</span><strong style="color:#34d399;">Ready to Sign In</strong></div>
+      <div class="cos-acc-row"><span>Endpoint</span><strong>127.0.0.1:8000</strong></div>
+    </div>
+    <button id="cosAccountInfoBtn" type="button" title="Account Login Info" aria-label="Account Login Info">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M5 20a7 7 0 0 1 14 0"/>
+      </svg>
+    </button>
+  `;
+  document.body.appendChild(accWrap);
+
+  const btn = document.getElementById("cosAccountInfoBtn");
+  const pop = document.getElementById("cosAccountPopover");
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    pop.classList.toggle("open");
+  });
+  document.addEventListener("click", () => pop.classList.remove("open"));
+
+  // Remember email when user submits login form so greeting personalizes next time
+  document.addEventListener("submit", () => {
+    const emailInput = document.querySelector('input[type="email"], input[name*="email" i], input[name*="user" i]');
+    if (emailInput && emailInput.value.trim()) {
+      localStorage.setItem("cos_last_email", emailInput.value.trim());
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

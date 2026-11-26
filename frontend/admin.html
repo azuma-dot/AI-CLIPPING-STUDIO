@@ -1,0 +1,484 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administrator Console — AI Clipping OS</title>
+  <style>
+    :root {
+      --bg: #090b10;
+      --panel: #131722;
+      --panel-2: #1a2030;
+      --border: #283246;
+      --text: #f3f5f8;
+      --muted: #94a3b8;
+      --accent: #6366f1;
+      --gold: #facc15;
+      --green: #22c55e;
+      --red: #f87171;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--panel);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.12rem; }
+    .admin-badge {
+      font-size: 0.72rem;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: rgba(250, 204, 21, 0.16);
+      color: var(--gold);
+      border: 1px solid rgba(250, 204, 21, 0.4);
+    }
+    .nav-group { display: flex; gap: 10px; align-items: center; }
+    .btn {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .btn:hover { border-color: var(--accent); }
+    .btn-primary { background: var(--accent); border-color: var(--accent); font-weight: 600; }
+    .btn-danger { border-color: rgba(248, 113, 113, 0.45); color: var(--red); }
+    .container { max-width: 1520px; margin: 22px auto; padding: 0 22px; display: flex; flex-direction: column; gap: 20px; }
+
+    /* Telemetry Strip */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+    }
+    .metric-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 15px 18px;
+    }
+    .metric-label { font-size: 0.76rem; color: var(--muted); margin-bottom: 6px; }
+    .metric-val { font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .dot.on { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .dot.off { background: var(--red); }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 1100px) { .main-grid { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+    }
+    h2 { font-size: 0.98rem; margin-bottom: 12px; }
+    label { display: block; font-size: 0.78rem; color: var(--muted); margin: 11px 0 5px; }
+    input[type="text"], input[type="password"], input[type="number"], select {
+      width: 100%;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 8px 10px;
+      font-size: 0.85rem;
+    }
+    .check-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+      font-size: 0.83rem;
+      padding: 8px 10px;
+      background: var(--panel-2);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    /* n8n Visual Node Canvas */
+    .canvas-wrapper {
+      background-color: #0d1017;
+      background-image: radial-gradient(#263044 1.25px, transparent 1.25px);
+      background-size: 20px 20px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+    }
+    .nodes-row { display: flex; align-items: center; min-width: 920px; padding: 10px 4px; }
+    .wf-node {
+      width: 166px;
+      background: #171c28;
+      border: 2px solid #2e384d;
+      border-radius: 12px;
+      padding: 11px;
+      position: relative;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .wf-node.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25); }
+    .wf-node.done { border-color: rgba(34, 197, 94, 0.65); }
+    .wf-node.running { border-color: var(--gold); }
+    .node-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.72rem; }
+    .node-state { font-size: 0.67rem; font-weight: 700; padding: 2px 6px; border-radius: 999px; background: #232b3d; color: var(--muted); }
+    .wf-node.done .node-state { background: rgba(34, 197, 94, 0.16); color: var(--green); }
+    .wf-node.running .node-state { background: rgba(250, 204, 21, 0.18); color: var(--gold); }
+    .node-name { font-weight: 700; font-size: 0.81rem; }
+    .node-sub { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+    .wire { width: 30px; height: 22px; flex-shrink: 0; }
+    .wire path { fill: none; stroke: #334155; stroke-width: 2.5; }
+    .wire.done path { stroke: var(--green); }
+    .wire.running path { stroke: var(--gold); stroke-dasharray: 5 4; animation: dashFlow 0.7s linear infinite; }
+    @keyframes dashFlow { to { stroke-dashoffset: -18; } }
+
+    .inspector-pre {
+      font-family: Consolas, Monaco, monospace;
+      font-size: 0.76rem;
+      color: #a5f3fc;
+      background: #0a0d14;
+      padding: 10px;
+      border-radius: 8px;
+      max-height: 140px;
+      overflow: auto;
+      white-space: pre-wrap;
+      border: 1px solid var(--border);
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 600; font-size: 0.76rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span>AI Clipping OS</span>
+      <span class="admin-badge">🛡️ ADMINISTRATOR CONSOLE</span>
+    </div>
+    <div class="nav-group">
+      <a class="btn" href="/">🎬 Switch to User Studio</a>
+      <a class="btn" href="http://localhost:8233" target="_blank">Temporal UI ↗</a>
+      <button class="btn" onclick="logout()">Sign Out</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Infrastructure & Storage Telemetry -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Temporal Orchestrator</div>
+        <div class="metric-val" id="mTemporal"><span class="dot off"></span> Checking...</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Ollama Local LLM</div>
+        <div class="metric-val" id="mOllama"><span class="dot off"></span> Checking...</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Total Jobs / Rendered Clips</div>
+        <div class="metric-val" id="mJobs">0 / 0</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Disk Storage (Uploads / Outputs / Temp)</div>
+        <div class="metric-val" id="mStorage">0 MB</div>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <!-- Left Column: Engine Config + User Management -->
+      <div style="display:flex; flex-direction:column; gap:20px;">
+        <div class="card">
+          <h2>AI Engine & Policy Settings</h2>
+          <label for="cfgOllama">Active Ollama LLM Model</label>
+          <input type="text" id="cfgOllama" placeholder="qwen3.5:4b" />
+
+          <label for="cfgWhisper">Faster-Whisper Model Size</label>
+          <select id="cfgWhisper">
+            <option value="tiny">tiny (Fastest)</option>
+            <option value="base">base (Balanced - Recommended)</option>
+            <option value="small">small (Higher Accuracy)</option>
+            <option value="medium">medium (Heavy GPU)</option>
+          </select>
+
+          <label for="cfgMaxClips">Max Clips Generated per Video (1–5)</label>
+          <input type="number" id="cfgMaxClips" min="1" max="5" value="3" />
+
+          <div class="check-row">
+            <span>Allow Public User Signups</span>
+            <input type="checkbox" id="cfgAllowReg" />
+          </div>
+          <div class="check-row">
+            <span>Allow YouTube / URL Downloads</span>
+            <input type="checkbox" id="cfgAllowUrl" />
+          </div>
+
+          <div style="display:flex; gap:8px; margin-top:14px;">
+            <button class="btn btn-primary" style="flex:1;" onclick="saveConfig()">Save Settings</button>
+            <button class="btn btn-danger" onclick="purgeTemp()">Purge Temp Cache</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>User Accounts & Roles</h2>
+          <div style="display:grid; grid-template-columns:1fr 1fr 90px auto; gap:6px; margin-bottom:12px;">
+            <input type="text" id="newEmail" type="email" placeholder="user@example.com" />
+            <input type="password" id="newPassword" placeholder="password" />
+            <select id="newRole">
+              <option value="user">user</option>
+              <option value="admin">admin</option>
+            </select>
+            <button class="btn btn-primary" onclick="addUser()">Add</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Email</th><th>Role</th><th>Jobs</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="usersTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Right Column: n8n Workflow Canvas + Global Jobs Table -->
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h2 style="margin:0;" id="wfHeader">Visual Workflow Inspector (n8n Node Graph)</h2>
+          <a class="btn" id="temporalLink" href="http://localhost:8233" target="_blank">Inspect in Temporal ↗</a>
+        </div>
+
+        <div class="canvas-wrapper">
+          <div class="nodes-row" id="nodesRow"></div>
+          <pre class="inspector-pre" id="inspectorOutput">Click any workflow row below or any node above to inspect live pipeline JSON.</pre>
+        </div>
+
+        <h2>All User Workflows</h2>
+        <table>
+          <thead>
+            <tr><th>Project ID</th><th>Owner</th><th>Source</th><th>Stage</th><th>Clips</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="jobsTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const NODES = [
+      { id: "ingest", icon: "📥", name: "1. Source Ingest", sub: "Upload / yt-dlp" },
+      { id: "audio", icon: "🎵", name: "2. Audio Extract", sub: "16kHz PCM WAV" },
+      { id: "whisper", icon: "🗣️", name: "3. Whisper STT", sub: "Word Timestamps" },
+      { id: "qwen", icon: "🧠", name: "4. Viral AI", sub: "Ollama LLM" },
+      { id: "render", icon: "🎬", name: "5. 9:16 Render", sub: "Face-Track + ASS" }
+    ];
+
+    let allProjects = [];
+    let selectedProject = null;
+    let selectedNode = "qwen";
+
+    async function logout() {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/login";
+    }
+
+    async function loadAdminData() {
+      const ovRes = await fetch("/api/admin/overview");
+      if (!ovRes.ok) { window.location.href = "/"; return; }
+      const ov = await ovRes.json();
+
+      const h = ov.health;
+      document.getElementById("mTemporal").innerHTML =
+        `<span class="dot ${h.temporal_online ? "on" : "off"}"></span> ${h.temporal_online ? "Online (7233)" : "Offline"}`;
+      document.getElementById("mOllama").innerHTML =
+        `<span class="dot ${h.ollama_online ? "on" : "off"}"></span> ${h.ollama_online ? (h.ollama_models.join(", ") || "Online") : "Standby"}`;
+      document.getElementById("mJobs").textContent = `${h.total_projects} Projects / ${h.total_clips} Clips`;
+      document.getElementById("mStorage").textContent = `${h.uploads_mb} / ${h.outputs_mb} / ${h.temp_mb} MB`;
+
+      const cfg = ov.config;
+      document.getElementById("cfgOllama").value = cfg.ollama_model;
+      document.getElementById("cfgWhisper").value = cfg.whisper_model;
+      document.getElementById("cfgMaxClips").value = cfg.max_clips;
+      document.getElementById("cfgAllowReg").checked = cfg.allow_registration;
+      document.getElementById("cfgAllowUrl").checked = cfg.allow_url_download;
+
+      document.getElementById("usersTable").innerHTML = ov.users.map(u => `
+        <tr>
+          <td><strong>${u.email || u.username}</strong></td>
+          <td>${u.role}</td>
+          <td>${u.project_count}</td>
+          <td style="display:flex; gap:4px;">
+            <button class="btn" onclick="toggleRole(${u.id}, '${u.role === "admin" ? "user" : "admin"}')">
+              Make ${u.role === "admin" ? "User" : "Admin"}
+            </button>
+            <button class="btn" onclick="resetPass(${u.id}, '${u.email || u.username}')">Reset PW</button>
+          </td>
+        </tr>
+      `).join("");
+
+      const pRes = await fetch("/api/projects");
+      const pData = await pRes.json();
+      allProjects = pData.projects || [];
+      if (!selectedProject && allProjects.length) selectedProject = allProjects[0];
+      else if (selectedProject) {
+        selectedProject = allProjects.find(p => p.project_id === selectedProject.project_id) || allProjects[0];
+      }
+
+      document.getElementById("jobsTable").innerHTML = allProjects.map(p => `
+        <tr style="cursor:pointer; background:${selectedProject && p.project_id === selectedProject.project_id ? "rgba(99,102,241,0.12)" : "transparent"}"
+            onclick="selectProject('${p.project_id}')">
+          <td><strong>${p.project_id}</strong></td>
+          <td>@${p.owner}</td>
+          <td style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p.source_label}</td>
+          <td>${p.stage}</td>
+          <td>${(p.clips || []).length}</td>
+          <td><button class="btn btn-danger" onclick="event.stopPropagation(); deleteProject('${p.project_id}')">Delete</button></td>
+        </tr>
+      `).join("");
+
+      renderCanvas();
+    }
+
+    function selectProject(pid) {
+      selectedProject = allProjects.find(p => p.project_id === pid) || null;
+      loadAdminData();
+    }
+
+    function getNodeStates(data) {
+      if (!data) return ["idle", "idle", "idle", "idle", "idle"];
+      const s = (data.stage || "").toLowerCase();
+      if (data.status === "COMPLETED" || s.includes("completed")) return ["done", "done", "done", "done", "done"];
+      if (s.includes("rendering")) return ["done", "done", "done", "done", "running"];
+      if (s.includes("highlight")) return ["done", "done", "done", "running", "idle"];
+      if (s.includes("transcrib")) return ["done", "done", "running", "idle", "idle"];
+      if (s.includes("extracting")) return ["done", "running", "idle", "idle", "idle"];
+      return ["running", "idle", "idle", "idle", "idle"];
+    }
+
+    function renderCanvas() {
+      const states = getNodeStates(selectedProject);
+      if (selectedProject) {
+        document.getElementById("wfHeader").textContent = `Visual Workflow: ${selectedProject.project_id} (@${selectedProject.owner})`;
+        document.getElementById("temporalLink").href = `http://localhost:8233/namespaces/default/workflows/${selectedProject.workflow_id}`;
+      }
+
+      document.getElementById("nodesRow").innerHTML = NODES.map((n, i) => {
+        const st = states[i];
+        const label = st === "done" ? "Done ✓" : st === "running" ? "Running..." : "Idle";
+        const wire = i < NODES.length - 1
+          ? `<svg class="wire ${st}" viewBox="0 0 30 22"><path d="M 0 11 C 12 11, 18 11, 30 11" /></svg>`
+          : "";
+        return `
+          <div class="wf-node ${st} ${n.id === selectedNode ? "selected" : ""}" onclick="selectedNode='${n.id}'; renderCanvas();">
+            <div class="node-top"><span>${n.icon}</span><span class="node-state">${label}</span></div>
+            <div class="node-name">${n.name}</div>
+            <div class="node-sub">${n.sub}</div>
+          </div>
+          ${wire}
+        `;
+      }).join("");
+
+      const pre = document.getElementById("inspectorOutput");
+      if (!selectedProject) {
+        pre.textContent = "No workflows found yet.";
+        return;
+      }
+      const d = selectedProject;
+      if (selectedNode === "whisper") {
+        pre.textContent = JSON.stringify({ transcript_preview: d.transcript_preview }, null, 2);
+      } else if (selectedNode === "qwen" || selectedNode === "render") {
+        pre.textContent = JSON.stringify({ clips: d.clips }, null, 2);
+      } else {
+        pre.textContent = JSON.stringify({ project_id: d.project_id, owner: d.owner, workflow_id: d.workflow_id, stage: d.stage }, null, 2);
+      }
+    }
+
+    async function saveConfig() {
+      const payload = {
+        ollama_model: document.getElementById("cfgOllama").value,
+        whisper_model: document.getElementById("cfgWhisper").value,
+        max_clips: parseInt(document.getElementById("cfgMaxClips").value, 10),
+        allow_registration: document.getElementById("cfgAllowReg").checked,
+        allow_url_download: document.getElementById("cfgAllowUrl").checked,
+      };
+      const res = await fetch("/api/admin/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) alert("Runtime configuration saved! Applied to all new jobs.");
+    }
+
+    async function addUser() {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: document.getElementById("newEmail").value,
+          password: document.getElementById("newPassword").value,
+          role: document.getElementById("newRole").value,
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.detail || "Failed to create user"); return; }
+      document.getElementById("newEmail").value = "";
+      document.getElementById("newPassword").value = "";
+      loadAdminData();
+    }
+
+    async function toggleRole(userId, newRole) {
+      const res = await fetch(`/api/admin/users/${userId}/role`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: newRole })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.detail || "Role update failed"); return; }
+      loadAdminData();
+    }
+
+    async function resetPass(userId, username) {
+      const pw = prompt(`Enter new password for ${username} (min 6 chars):`);
+      if (!pw) return;
+      const res = await fetch(`/api/admin/users/${userId}/password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.detail || "Reset failed"); return; }
+      alert(`Password updated for ${username}`);
+    }
+
+    async function deleteProject(pid) {
+      if (!confirm(`Delete project ${pid} and all its rendered files?`)) return;
+      await fetch(`/api/admin/projects/${pid}`, { method: "DELETE" });
+      if (selectedProject && selectedProject.project_id === pid) selectedProject = null;
+      loadAdminData();
+    }
+
+    async function purgeTemp() {
+      const res = await fetch("/api/admin/purge-temp", { method: "POST" });
+      const data = await res.json();
+      alert(`Purged ${data.removed_files} temporary cache files.`);
+      loadAdminData();
+    }
+
+    loadAdminData();
+    setInterval(loadAdminData, 5000);
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,4103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Clipping Studio — AI Clipping OS</title>
+  <style>
+    :root {
+      --bg: #080b12;
+      --panel: #111624;
+      --panel-2: #182034;
+      --border: rgba(99, 102, 241, 0.25);
+      --text: #f3f5f8;
+      --muted: #94a3b8;
+      --accent: #6366f1;
+      --gold: #facc15;
+      --green: #4ade80;
+      --red: #f87171;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top right, #141b31 0%, var(--bg) 55%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 28px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(11, 15, 25, 0.85);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; }
+    .user-pill {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #c7d2fe;
+      background: rgba(99, 102, 241, 0.16);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      padding: 5px 12px;
+      border-radius: 999px;
+    }
+    .nav-actions { display: flex; align-items: center; gap: 10px; }
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text);
+      padding: 7px 14px;
+      border-radius: 9px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-ghost:hover { background: rgba(255, 255, 255, 0.12); }
+
+    main {
+      width: 100%;
+      max-width: 1280px;
+      margin: 24px auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 22px;
+      flex: 1;
+    }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+    }
+    .card h2 { font-size: 1rem; font-weight: 700; margin-bottom: 14px; color: #e2e8f0; }
+
+    .project-list { display: flex; flex-direction: column; gap: 10px; max-height: 72vh; overflow-y: auto; }
+    .proj-item {
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 11px;
+      padding: 12px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .proj-item:hover, .proj-item.active { border-color: var(--accent); background: rgba(99, 102, 241, 0.14); }
+    .proj-title { font-size: 0.86rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .proj-meta { font-size: 0.75rem; color: var(--muted); margin-top: 5px; display: flex; justify-content: space-between; }
+    .mini-bar { height: 4px; background: rgba(255, 255, 255, 0.08); border-radius: 999px; overflow: hidden; margin-top: 8px; }
+    .mini-bar-fill { height: 100%; background: var(--accent); transition: width 0.4s ease; }
+
+    .tabs {
+      display: inline-flex;
+      background: #0b0f19;
+      padding: 4px;
+      border-radius: 11px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 16px;
+      gap: 4px;
+    }
+    .tab-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tab-btn.active { background: var(--accent); color: #fff; }
+    .hidden { display: none !important; }
+
+    .dropzone {
+      border: 2px dashed rgba(99, 102, 241, 0.4);
+      border-radius: 12px;
+      padding: 26px;
+      text-align: center;
+      background: rgba(24, 32, 52, 0.5);
+      cursor: pointer;
+      margin-bottom: 14px;
+    }
+    .dropzone:hover { border-color: var(--accent); background: rgba(99, 102, 241, 0.1); }
+    label { display: block; font-size: 0.8rem; color: var(--muted); margin: 10px 0 6px; }
+    input[type="text"], input[type="url"] {
+      width: 100%;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 11px 13px;
+      font-size: 0.9rem;
+    }
+    input:focus { outline: none; border-color: var(--accent); }
+    .presets { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 14px; }
+    .preset-chip {
+      background: rgba(250, 204, 21, 0.12);
+      border: 1px solid rgba(250, 204, 21, 0.3);
+      color: var(--gold);
+      padding: 5px 11px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .primary-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.94rem;
+      cursor: pointer;
+    }
+    .primary-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .status-msg { margin-top: 10px; font-size: 0.84rem; color: var(--gold); min-height: 18px; }
+
+    /* Progress Bar */
+    .progress-wrap {
+      margin-top: 14px;
+      background: #0b0f19;
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .progress-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 0.84rem;
+    }
+    .progress-detail { color: #e2e8f0; font-weight: 600; }
+    .progress-detail.error { color: var(--red); }
+    .progress-stats { display: flex; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .pct-badge {
+      background: rgba(99, 102, 241, 0.22);
+      border: 1px solid rgba(99, 102, 241, 0.45);
+      color: #c7d2fe;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.78rem;
+    }
+    .pct-badge.done { background: rgba(74, 222, 128, 0.16); border-color: rgba(74, 222, 128, 0.45); color: var(--green); }
+    .pct-badge.error { background: rgba(248, 113, 113, 0.16); border-color: rgba(248, 113, 113, 0.45); color: var(--red); }
+    .progress-track {
+      width: 100%;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #facc15 100%);
+      background-size: 200% 100%;
+      transition: width 0.5s ease;
+      animation: shimmer 2.2s linear infinite;
+    }
+    .progress-fill.done { background: linear-gradient(90deg, #22c55e, #4ade80); animation: none; }
+    .progress-fill.error { background: var(--red); animation: none; }
+    @keyframes shimmer {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    .stepper { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 14px 0; }
+    .step {
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .step.done { border-color: rgba(74, 222, 128, 0.45); color: var(--green); background: rgba(74, 222, 128, 0.08); }
+    .step.active { border-color: var(--gold); color: var(--gold); background: rgba(250, 204, 21, 0.12); }
+
+    .activity-log {
+      background: #090d16;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.76rem;
+      color: var(--muted);
+      max-height: 115px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+    .log-line span.ts { color: #6366f1; margin-right: 6px; }
+    .log-line.err { color: var(--red); }
+    .log-line.ok { color: var(--green); }
+
+    .clips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 14px; }
+    .clip-card {
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .clip-card video { width: 100%; aspect-ratio: 9 / 16; background: #000; object-fit: cover; }
+.clip-card video.wide-video { aspect-ratio: 16 / 9; }
+.opt-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0 10px; }
+@media (max-width: 780px) { .opt-grid { grid-template-columns: 1fr; } }
+.opt-box { background: rgba(15, 23, 42, 0.72); border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 12px; padding: 10px 12px; }
+.opt-title { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: #94a3b8; margin-bottom: 8px; font-weight: 700; }
+.seg-row { display: flex; gap: 6px; }
+.seg-btn { flex: 1; padding: 7px 8px; border-radius: 8px; border: 1px solid rgba(148, 163, 184, 0.24); background: rgba(30, 41, 59, 0.8); color: #cbd5e1; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.15s ease; }
+.seg-btn.active { background: linear-gradient(135deg, #6366f1, #06b6d4); color: #fff; border-color: transparent; box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35); }
+.capcut-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 10px; padding: 9px 12px; margin-bottom: 12px; font-size: 0.83rem; color: #cbd5e1; cursor: pointer; }
+.capcut-bar input[type="checkbox"] { width: 16px; height: 16px; accent-color: #06b6d4; cursor: pointer; }
+.capcut-btn { display: block; width: 100%; margin-top: 8px; padding: 9px 12px; border-radius: 9px; border: 1px solid rgba(6, 182, 212, 0.45); background: rgba(6, 182, 212, 0.14); color: #67e8f9; font-weight: 700; font-size: 0.84rem; text-align: center; cursor: pointer; transition: all 0.15s ease; }
+.capcut-btn:hover { background: rgba(6, 182, 212, 0.26); color: #fff; }
+    .clip-body { padding: 12px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; }
+    .clip-title { font-size: 0.84rem; font-weight: 700; }
+    .dl-btn {
+      display: block;
+      text-align: center;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    footer {
+      text-align: center;
+      padding: 18px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      margin-top: 28px;
+    }
+    footer strong { color: #fff; }
+    footer span { color: var(--gold); font-weight: 700; }
+  </style>
+<style id="clippingOsMobileResponsive">
+  html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  @media (max-width: 640px) {
+    body {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+      font-size: 14px;
+    }
+
+    /* Collapse side-by-side grids into a single column on phones */
+    [style*="grid-template-columns:1fr 1fr"],
+    [style*="grid-template-columns: 1fr 1fr"],
+    [style*="grid-template-columns:repeat(2"],
+    [style*="grid-template-columns: repeat(2"],
+    [style*="grid-template-columns:repeat(3"],
+    [style*="grid-template-columns: repeat(3"] {
+      grid-template-columns: 1fr !important;
+      gap: 10px !important;
+    }
+
+    /* Prevent horizontal overflow in flex toolbars and action bars */
+    [style*="display:flex"],
+    [style*="display: flex"] {
+      flex-wrap: wrap !important;
+      max-width: 100%;
+    }
+
+    /* Make modals comfortable and scrollable on short phone screens */
+    [id*="modal" i],
+    [class*="modal" i] {
+      padding: 10px !important;
+    }
+
+    [id*="modal" i] > div,
+    [class*="modal" i] > div {
+      width: 100% !important;
+      max-width: 100% !important;
+      max-height: 90vh !important;
+      overflow-y: auto !important;
+      padding: 16px 14px !important;
+      box-sizing: border-box !important;
+    }
+
+    /* Touch-friendly inputs, selects, and buttons */
+    input,
+    select,
+    textarea,
+    button {
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="password"],
+    select,
+    textarea {
+      min-height: 40px;
+      font-size: 15px !important;
+    }
+
+    button,
+    .btn {
+      min-height: 38px;
+    }
+
+    /* Keep videos and clip previews neatly inside cards */
+    video,
+    img,
+    canvas {
+      max-width: 100% !important;
+      height: auto !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- AI CLIPPING OS: MASTER SaaS LAYOUT & WORKSPACE SHELL -->
+<style id="cos-master-layout-css">
+  :root {
+    --bg-canvas: #090b10;
+    --bg-card: #111522;
+    --bg-card-alt: #161c2e;
+    --line-subtle: rgba(148, 163, 184, 0.16);
+    --accent-purple: #7c3aed;
+    --accent-purple-lt: #8b5cf6;
+    --accent-blue: #3b82f6;
+    --accent-cyan: #06b6d4;
+    --ink-main: #f8fafc;
+    --ink-muted: #94a3b8;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+    background: var(--bg-canvas);
+    color: var(--ink-main);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .cos-shell {
+    max-width: 1380px;
+    margin: 16px auto 32px auto;
+    padding: 0 16px;
+  }
+
+  .cos-top-tabs {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: var(--bg-card);
+    border: 1px solid var(--line-subtle);
+    border-radius: 14px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+
+  .cos-tab-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .cos-tab-btn {
+    background: var(--bg-card-alt);
+    color: var(--ink-main);
+    border: 1px solid var(--line-subtle);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .cos-tab-btn:hover {
+    border-color: var(--accent-purple-lt);
+  }
+
+  .cos-tab-btn.active {
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+    border-color: transparent;
+    color: #ffffff;
+  }
+
+  .cos-hero-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 18px;
+    align-items: stretch;
+    margin-bottom: 18px;
+  }
+
+  @media (max-width: 900px) {
+    .cos-hero-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .cos-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--line-subtle);
+    border-radius: 14px;
+    padding: 18px;
+  }
+
+  .cos-panel h1, .cos-panel h2, .cos-panel h3 {
+    margin: 0 0 8px 0;
+    color: var(--ink-main);
+  }
+
+  .cos-muted {
+    color: var(--ink-muted);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .cos-btn-grad {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .cos-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: var(--bg-card-alt);
+    color: var(--ink-main);
+    border: 1px solid var(--line-subtle);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .cos-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .cos-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+  }
+
+  .cos-mini-card {
+    background: var(--bg-card-alt);
+    border: 1px solid var(--line-subtle);
+    border-radius: 12px;
+    padding: 14px;
+  }
+
+  .cos-dash-layout {
+    display: grid;
+    grid-template-columns: 245px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .cos-mobile-drawer-btn {
+    display: none;
+  }
+
+  @media (max-width: 860px) {
+    .cos-dash-layout {
+      grid-template-columns: 1fr;
+    }
+    .cos-mobile-drawer-btn {
+      display: inline-flex;
+    }
+    .cos-sidebar {
+      display: none;
+    }
+    .cos-sidebar.open {
+      display: block;
+    }
+  }
+
+  .cos-sidebar {
+    background: var(--bg-card);
+    border: 1px solid var(--line-subtle);
+    border-radius: 14px;
+    padding: 14px;
+  }
+
+  .cos-nav-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    color: var(--ink-muted);
+    border: 1px solid transparent;
+    border-radius: 9px;
+    padding: 9px 11px;
+    margin-bottom: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .cos-nav-item:hover {
+    color: var(--ink-main);
+    background: var(--bg-card-alt);
+  }
+
+  .cos-nav-item.active {
+    color: #ffffff;
+    background: rgba(124, 58, 237, 0.22);
+    border-color: rgba(139, 92, 246, 0.45);
+  }
+
+  .cos-badge-soon {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--accent-cyan);
+    background: rgba(6, 182, 212, 0.14);
+    border: 1px solid rgba(6, 182, 212, 0.35);
+    border-radius: 999px;
+    padding: 2px 7px;
+  }
+
+  .cos-badge-live {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #86efac;
+    background: rgba(34, 197, 94, 0.14);
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    border-radius: 999px;
+    padding: 2px 7px;
+  }
+
+  .cos-timeline-track {
+    height: 8px;
+    border-radius: 999px;
+    background: #0b0f19;
+    border: 1px solid var(--line-subtle);
+    overflow: hidden;
+    margin: 10px 0;
+  }
+
+  .cos-timeline-bar {
+    height: 100%;
+    width: 64%;
+    background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue), var(--accent-cyan));
+  }
+
+  .cos-hidden {
+    display: none !important;
+  }
+</style>
+
+<div id="cosMasterApp" class="cos-shell">
+  <div class="cos-top-tabs">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <strong>AI Clipping OS</strong>
+      <span class="cos-muted">Turn Long Videos Into Viral Clips.</span>
+    </div>
+    <div class="cos-tab-group">
+      <button type="button" id="cosTabLanding" class="cos-tab-btn" onclick="cosSwitchTopMode('landing')">Landing Showcase</button>
+      <button type="button" id="cosTabWorkspace" class="cos-tab-btn active" onclick="cosSwitchTopMode('workspace')">Creator Dashboard</button>
+      <a href="/login" class="cos-btn-ghost" style="padding:7px 12px;font-size:12px;">Login / Account</a>
+      <a href="#cos-studio-enhancements" class="cos-btn-grad" style="padding:7px 13px;font-size:12px;">Start Creating</a>
+    </div>
+  </div>
+
+  <!-- LANDING SHOWCASE VIEW -->
+  <div id="cosLandingView" class="cos-hidden">
+    <section class="cos-hero-grid">
+      <div class="cos-panel">
+        <span class="cos-badge-live">AI Clipping OS</span>
+        <h1 style="font-size:32px;line-height:1.15;margin-top:10px;">Turn Long Videos Into Viral Clips.</h1>
+        <p class="cos-muted" style="margin:10px 0 16px 0;">
+          Let AI discover your best moments, create professional edits and transform long recordings into short-form content.
+        </p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button type="button" class="cos-btn-grad" onclick="cosSwitchTopMode('workspace'); cosOpenSection('new-project');">Start Creating</button>
+          <a href="#cosLandingFeatures" class="cos-btn-ghost">Explore Features</a>
+        </div>
+      </div>
+
+      <div class="cos-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <strong>Editor &amp; Timeline Preview</strong>
+          <span class="cos-badge-live">4K / 9:16 Ready</span>
+        </div>
+        <div class="cos-muted">AI moment detection &bull; Animated captions &bull; Audio &amp; 4K export settings</div>
+        <div class="cos-timeline-track"><div class="cos-timeline-bar"></div></div>
+        <div class="cos-grid-4" style="margin-top:10px;">
+          <div class="cos-mini-card"><strong>Moments</strong><div class="cos-muted">Hook &amp; highlight markers</div></div>
+          <div class="cos-mini-card"><strong>Captions</strong><div class="cos-muted">Dynamic styling</div></div>
+          <div class="cos-mini-card"><strong>Audio</strong><div class="cos-muted">LUFS &amp; cleanup</div></div>
+          <div class="cos-mini-card"><strong>Export</strong><div class="cos-muted">460p to 4K presets</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="cosLandingFeatures" class="cos-panel" style="margin-bottom:16px;">
+      <h2>Feature Highlights</h2>
+      <p class="cos-muted" style="margin-bottom:12px;">Core clipping workflows connected to your backend alongside specialized AI modules.</p>
+      <div class="cos-grid-4">
+        <div class="cos-mini-card"><strong>1. AI Viral Moment Detection</strong> <span class="cos-badge-live">Live</span><p class="cos-muted" style="margin-top:6px;">Scores candidate moments without promising guaranteed virality.</p></div>
+        <div class="cos-mini-card"><strong>2. Professional AI Editing</strong> <span class="cos-badge-live">Live</span><p class="cos-muted" style="margin-top:6px;">Fast clip rendering and pro polish hooks.</p></div>
+        <div class="cos-mini-card"><strong>3. Smart Animated Subtitles</strong> <span class="cos-badge-live">Live</span><p class="cos-muted" style="margin-top:6px;">Caption toggles and custom hook prompts.</p></div>
+        <div class="cos-mini-card"><strong>4. AI Sound Effects</strong> <span class="cos-badge-soon">Coming Soon</span><p class="cos-muted" style="margin-top:6px;">Sound library &amp; SFX timeline tracks.</p></div>
+        <div class="cos-mini-card"><strong>5. Intelligent Video Cropping</strong> <span class="cos-badge-live">Live</span><p class="cos-muted" style="margin-top:6px;">9:16, 16:9, and AUTO framing presets.</p></div>
+        <div class="cos-mini-card"><strong>6. AI Thumbnail Designer</strong> <span class="cos-badge-soon">Coming Soon</span><p class="cos-muted" style="margin-top:6px;">Automated thumbnail variant generator.</p></div>
+        <div class="cos-mini-card"><strong>7. Custom Editing Instructions</strong> <span class="cos-badge-live">Live</span><p class="cos-muted" style="margin-top:6px;">Direct prompt guidance for pacing and hooks.</p></div>
+        <div class="cos-mini-card"><strong>8. Multiple Export Qualities</strong> <span class="cos-badge-live">Live</span><p class="cos-muted" style="margin-top:6px;">460p, 760/720p, 1060/1080p, 2K, 4K &amp; audio bitrates.</p></div>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="cos-panel" style="margin-bottom:16px;">
+      <h2>How It Works</h2>
+      <div class="cos-grid-4">
+        <div class="cos-mini-card"><strong>Step 1 &amp; 2</strong><p class="cos-muted" style="margin-top:6px;">Upload video or paste URL; backend analyzes the recording.</p></div>
+        <div class="cos-mini-card"><strong>Step 3</strong><p class="cos-muted" style="margin-top:6px;">AI highlights engaging moments and hooks.</p></div>
+        <div class="cos-mini-card"><strong>Step 4</strong><p class="cos-muted" style="margin-top:6px;">Generate clips with chosen duration, ratio, and quality.</p></div>
+        <div class="cos-mini-card"><strong>Step 5</strong><p class="cos-muted" style="margin-top:6px;">Review progress, polish clips, and export results.</p></div>
+      </div>
+    </section>
+
+    <section class="cos-grid-3" style="margin-bottom:16px;">
+      <div id="pricing" class="cos-panel">
+        <h3>Quality &amp; Export Tiers</h3>
+        <p class="cos-muted">Supports 460p, 760p, 1060p, 2K, and 4K graphics options plus configurable audio bitrates and audio downloads.</p>
+      </div>
+      <div class="cos-panel">
+        <h3>Editing Styles</h3>
+        <p class="cos-muted">Gaming Hype, Cinematic, Podcast Professional, Meme Style, Minimal, and Fast-Paced Viral presets.</p>
+      </div>
+      <div class="cos-panel">
+        <h3>Your Next Viral Clip Starts Here.</h3>
+        <p class="cos-muted" style="margin-bottom:12px;">Jump straight into your project workspace and start clipping.</p>
+        <button type="button" class="cos-btn-grad" onclick="cosSwitchTopMode('workspace'); cosOpenSection('new-project');">Start Creating</button>
+      </div>
+    </section>
+
+    <footer class="cos-panel" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+      <span class="cos-muted">AI Clipping OS &mdash; Turn Long Videos Into Viral Clips.</span>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;">
+        <a href="/support" style="color:#94a3b8;text-decoration:none;">Help &amp; Contact</a>
+        <a href="/privacy" style="color:#94a3b8;text-decoration:none;">Privacy Policy</a>
+        <a href="/admin" style="color:#94a3b8;text-decoration:none;">Admin</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- CREATOR DASHBOARD VIEW -->
+  <div id="cosWorkspaceView" class="cos-dash-layout">
+    <div>
+      <button type="button" class="cos-btn-ghost cos-mobile-drawer-btn" style="width:100%;margin-bottom:10px;" onclick="cosToggleMobileSidebar()">
+        Toggle Navigation Menu
+      </button>
+      <aside id="cosSidebar" class="cos-sidebar" aria-label="Workspace Sections">
+        <div style="margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line-subtle);">
+          <div style="font-weight:700;font-size:14px;">AI Clipping OS</div>
+          <div id="cosSidebarUser" class="cos-muted" style="font-size:12px;margin-top:2px;">Checking session...</div>
+        </div>
+
+        <button type="button" class="cos-nav-item active" data-sec="overview" onclick="cosOpenSection('overview')"><span>Overview</span><span class="cos-badge-live">Live</span></button>
+        <button type="button" class="cos-nav-item" data-sec="new-project" onclick="cosOpenSection('new-project')"><span>New Project</span><span class="cos-badge-live">Live</span></button>
+        <button type="button" class="cos-nav-item" data-sec="editing-studio" onclick="cosOpenSection('editing-studio')"><span>AI Editing Studio</span><span class="cos-badge-live">Live</span></button>
+        <button type="button" class="cos-nav-item" data-sec="moments" onclick="cosOpenSection('moments')"><span>Viral Moments</span><span class="cos-badge-soon">Soon</span></button>
+        <button type="button" class="cos-nav-item" data-sec="clip-dna" onclick="cosOpenSection('clip-dna')"><span>Clip DNA</span><span class="cos-badge-soon">Soon</span></button>
+        <button type="button" class="cos-nav-item" data-sec="gallery" onclick="cosOpenSection('gallery')"><span>Generated Clips</span><span class="cos-badge-live">Live</span></button>
+        <button type="button" class="cos-nav-item" data-sec="thumbnails" onclick="cosOpenSection('thumbnails')"><span>AI Thumbnail Designer</span><span class="cos-badge-soon">Soon</span></button>
+        <button type="button" class="cos-nav-item" data-sec="sound-director" onclick="cosOpenSection('sound-director')"><span>Smart Sound Director</span><span class="cos-badge-soon">Soon</span></button>
+        <button type="button" class="cos-nav-item" data-sec="analytics" onclick="cosOpenSection('analytics')"><span>Analytics</span><span class="cos-badge-live">Live</span></button>
+        <button type="button" class="cos-nav-item" data-sec="settings" onclick="cosOpenSection('settings')"><span>Settings &amp; Support</span><span class="cos-badge-live">Live</span></button>
+
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line-subtle);display:flex;flex-direction:column;gap:6px;">
+          <a href="/login" class="cos-btn-ghost" style="padding:7px 10px;font-size:12px;">Profile / Login</a>
+          <button type="button" class="cos-btn-ghost" style="padding:7px 10px;font-size:12px;" onclick="cosLogoutSession()">Sign Out</button>
+        </div>
+      </aside>
+    </div>
+
+    <div id="cosSectionHost">
+      <!-- OVERVIEW -->
+      <section id="cosSec-overview" class="cos-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+          <div>
+            <h2>Creator Overview</h2>
+            <p class="cos-muted">Live counts synced from your backend projects list.</p>
+          </div>
+          <button type="button" class="cos-btn-grad" onclick="cosOpenSection('new-project')">Create New Project</button>
+        </div>
+        <div class="cos-grid-4">
+          <div class="cos-mini-card"><div class="cos-muted">Total Projects</div><div id="cosStatProjects" style="font-size:22px;font-weight:700;margin-top:4px;">0</div></div>
+          <div class="cos-mini-card"><div class="cos-muted">Completed Jobs</div><div id="cosStatCompleted" style="font-size:22px;font-weight:700;margin-top:4px;">0</div></div>
+          <div class="cos-mini-card"><div class="cos-muted">Active / Queued</div><div id="cosStatActive" style="font-size:22px;font-weight:700;margin-top:4px;">0</div></div>
+          <div class="cos-mini-card"><div class="cos-muted">Clips Detected</div><div id="cosStatClips" style="font-size:22px;font-weight:700;margin-top:4px;">0</div></div>
+        </div>
+      </section>
+
+      <!-- NEW PROJECT BRIDGE -->
+      <section id="cosSec-new-project" class="cos-panel cos-hidden">
+        <h2>New Project &amp; Clip Generator</h2>
+        <p class="cos-muted" style="margin-bottom:12px;">
+          Use your existing project uploader, URL input, duration/ratio/caption controls, and live progress workspace right below.
+        </p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button type="button" class="cos-btn-grad" onclick="cosScrollToStudioForm()">Jump to Upload &amp; Generate Form</button>
+          <button type="button" class="cos-btn-ghost" onclick="cosRefreshProjectsStats()">Refresh Project Metrics</button>
+        </div>
+      </section>
+
+      <!-- AI EDITING STUDIO -->
+      <section id="cosSec-editing-studio" class="cos-panel cos-hidden">
+        <h2>AI Editing Studio</h2>
+        <p class="cos-muted" style="margin-bottom:12px;">
+          Adjust studio enhancements, trigger Auto AI Pro or Studio Pro Polish on your active project, and review clip outputs.
+        </p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <a href="#cos-studio-enhancements" class="cos-btn-grad">Open Studio Enhancements</a>
+          <button type="button" class="cos-btn-ghost" onclick="cosScrollToStudioForm()">Open Live Workspace &amp; Clips</button>
+        </div>
+      </section>
+
+      <!-- COMING SOON & SUPPORTING MODULES -->
+      <section id="cosSec-moments" class="cos-panel cos-hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <h2>Viral Moment Intelligence</h2>
+          <span class="cos-badge-soon">Coming Soon</span>
+        </div>
+        <p class="cos-muted" style="margin-top:8px;">
+          Dedicated moment-scoring cards and one-click moment-to-clip preview endpoints are coming soon. AI moment scores estimate engagement potential rather than guaranteeing virality.
+        </p>
+      </section>
+
+      <section id="cosSec-clip-dna" class="cos-panel cos-hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <h2>Clip DNA Profiles</h2>
+          <span class="cos-badge-soon">Coming Soon</span>
+        </div>
+        <p class="cos-muted" style="margin-top:8px;">
+          Multi-profile Clip DNA presets (caption fonts, color palettes, zoom intensity, intro/outro) will sync via dedicated API endpoints in an upcoming update.
+        </p>
+      </section>
+
+      <section id="cosSec-gallery" class="cos-panel cos-hidden">
+        <h2>Generated Clips Gallery</h2>
+        <p class="cos-muted" style="margin-bottom:12px;">
+          View and manage clips rendered in your active project workspace below.
+        </p>
+        <button type="button" class="cos-btn-grad" onclick="cosScrollToStudioForm()">View Clips Grid</button>
+      </section>
+
+      <section id="cosSec-thumbnails" class="cos-panel cos-hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <h2>AI Thumbnail Designer</h2>
+          <span class="cos-badge-soon">Coming Soon</span>
+        </div>
+        <p class="cos-muted" style="margin-top:8px;">
+          Custom thumbnail concept generation and multi-variant thumbnail previews are coming soon.
+        </p>
+      </section>
+
+      <section id="cosSec-sound-director" class="cos-panel cos-hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <h2>Smart Sound Director</h2>
+          <span class="cos-badge-soon">Coming Soon</span>
+        </div>
+        <p class="cos-muted" style="margin-top:8px;">
+          Interactive SFX placement, custom sound libraries, and multi-track audio mixing controls are coming soon.
+        </p>
+      </section>
+
+      <section id="cosSec-analytics" class="cos-panel cos-hidden">
+        <h2>Analytics</h2>
+        <p class="cos-muted" id="cosAnalyticsSummary" style="margin-top:8px;">
+          Loading project and clip counts from <code>/api/projects</code>...
+        </p>
+      </section>
+
+      <section id="cosSec-settings" class="cos-panel cos-hidden">
+        <h2>Settings, Privacy &amp; Support</h2>
+        <p class="cos-muted" style="margin-bottom:12px;">
+          Account details are loaded from <code>/api/auth/me</code>. Manage sessions or visit legal and support pages below.
+        </p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <a href="/privacy" class="cos-btn-ghost">Privacy Policy</a>
+          <a href="/support" class="cos-btn-ghost">Help &amp; Support</a>
+          <a href="/admin" class="cos-btn-ghost">Admin Panel</a>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script id="cos-master-layout-js">
+function cosSwitchTopMode(mode) {
+  var landing = document.getElementById("cosLandingView");
+  var workspace = document.getElementById("cosWorkspaceView");
+  var btnL = document.getElementById("cosTabLanding");
+  var btnW = document.getElementById("cosTabWorkspace");
+  if (!landing || !workspace) return;
+  if (mode === "landing") {
+    landing.classList.remove("cos-hidden");
+    workspace.classList.add("cos-hidden");
+    if (btnL) btnL.classList.add("active");
+    if (btnW) btnW.classList.remove("active");
+  } else {
+    landing.classList.add("cos-hidden");
+    workspace.classList.remove("cos-hidden");
+    if (btnW) btnW.classList.add("active");
+    if (btnL) btnL.classList.remove("active");
+  }
+}
+
+function cosToggleMobileSidebar() {
+  var sb = document.getElementById("cosSidebar");
+  if (sb) sb.classList.toggle("open");
+}
+
+function cosOpenSection(secName) {
+  cosSwitchTopMode("workspace");
+  var panels = document.querySelectorAll('[id^="cosSec-"]');
+  panels.forEach(function (el) {
+    el.classList.add("cos-hidden");
+  });
+  var target = document.getElementById("cosSec-" + secName);
+  if (target) target.classList.remove("cos-hidden");
+
+  var navs = document.querySelectorAll(".cos-nav-item");
+  navs.forEach(function (btn) {
+    if (btn.getAttribute("data-sec") === secName) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+  var sb = document.getElementById("cosSidebar");
+  if (sb && window.innerWidth <= 860) sb.classList.remove("open");
+}
+
+function cosScrollToStudioForm() {
+  var target = document.getElementById("promptInput") || document.getElementById("videoUrl") || document.getElementById("startBtn");
+  if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+async function cosLogoutSession() {
+  try {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+  } catch (e) {}
+  window.location.href = "/login";
+}
+
+async function cosRefreshProjectsStats() {
+  try {
+    var res = await fetch("/api/projects", { credentials: "include" });
+    if (!res.ok) return;
+    var data = await res.json();
+    var list = Array.isArray(data) ? data : (Array.isArray(data.projects) ? data.projects : []);
+    var total = list.length;
+    var completed = list.filter(function (p) { return String(p.status || "").toLowerCase() === "completed"; }).length;
+    var active = list.filter(function (p) {
+      var st = String(p.status || "").toLowerCase();
+      return st && st !== "completed" && st !== "failed" && st !== "error";
+    }).length;
+    var clipsCount = list.reduce(function (acc, p) {
+      var c = Array.isArray(p.clips) ? p.clips.length : (typeof p.clip_count === "number" ? p.clip_count : 0);
+      return acc + c;
+    }, 0);
+
+    var elP = document.getElementById("cosStatProjects");
+    var elC = document.getElementById("cosStatCompleted");
+    var elA = document.getElementById("cosStatActive");
+    var elCl = document.getElementById("cosStatClips");
+    var elAn = document.getElementById("cosAnalyticsSummary");
+
+    if (elP) elP.textContent = String(total);
+    if (elC) elC.textContent = String(completed);
+    if (elA) elA.textContent = String(active);
+    if (elCl) elCl.textContent = String(clipsCount);
+    if (elAn) {
+      elAn.textContent = "Projects: " + total + " | Completed: " + completed + " | Active/Queued: " + active + " | Total Clips: " + clipsCount;
+    }
+  } catch (e) {}
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  fetch("/api/auth/me", { credentials: "include" })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (u) {
+      var el = document.getElementById("cosSidebarUser");
+      if (!el) return;
+      if (u && (u.email || u.username || u.user_id)) {
+        el.textContent = u.email || u.username || u.user_id;
+      } else {
+        el.textContent = "Guest / Session active";
+      }
+    })
+    .catch(function () {});
+  cosRefreshProjectsStats();
+});
+</script>
+
+
+<header>
+    <div class="brand">
+      <h1>AI Clipping Studio</h1>
+      <span class="user-pill" id="userBadge">Connecting...</span>
+    </div>
+    <div class="nav-actions">
+      <a href="/admin" id="adminLink" class="btn-ghost hidden">Admin Console</a>
+      <button type="button" class="btn-ghost" onclick="logout()">Sign Out</button>
+    </div>
+  </header>
+
+  <main>
+    <aside class="card">
+      <h2>My Projects</h2>
+      <div class="project-list" id="projectList">
+        <div style="color: var(--muted); font-size: 0.84rem;">No projects yet. Upload a video or paste a link to start.</div>
+      </div>
+    </aside>
+
+    <section style="display: flex; flex-direction: column; gap: 20px;">
+      <div class="card">
+        <div class="tabs">
+          <button type="button" class="tab-btn active" id="btnTabUrl" onclick="switchTab('url')">Paste Video URL</button>
+          <button type="button" class="tab-btn" id="btnTabFile" onclick="switchTab('file')">Upload Video</button>
+        </div>
+
+        <div id="panelUrl">
+          <label for="videoUrl">Video URL (YouTube, Kick Clip/VOD, Twitch, Direct MP4)</label>
+          <input id="videoUrl" type="url" placeholder="https://www.youtube.com/watch?v=..." />
+        </div>
+
+        <div id="panelFile" class="hidden">
+          <div class="dropzone" onclick="document.getElementById('videoFile').click()">
+            <div style="font-weight: 700; margin-bottom: 4px;" id="fileLabel">Click to choose an MP4 / MOV / MKV file</div>
+            <div style="font-size: 0.78rem; color: var(--muted);">Local processing via Faster-Whisper + Ollama + FFmpeg</div>
+            <input id="videoFile" type="file" accept="video/*" class="hidden" onchange="onFilePicked(this)" />
+          </div>
+        </div>
+
+        <label for="promptInput">AI Editing Style & Hook Instructions</label>
+        <input id="promptInput" type="text" value="Find the highest-energy viral moments with strong hooks and fast pacing" />
+
+        <div class="presets">
+          <button type="button" class="preset-chip" onclick="setPrompt('Extract intense gaming clutches, hype reactions, and funny moments')">Gaming</button>
+          <button type="button" class="preset-chip" onclick="setPrompt('Extract insightful podcast takes, debates, and memorable stories')">Podcast</button>
+          <button type="button" class="preset-chip" onclick="setPrompt('Extract hilarious moments, jokes, and unexpected reactions')">Funny</button>
+          <button type="button" class="preset-chip" onclick="setPrompt('Extract high-impact anime fight scenes and epic climax moments')">Anime Action</button>
+        </div>
+
+        <div class="opt-grid">
+  <div class="opt-box">
+    <div class="opt-title">Clip Duration</div>
+    <div class="seg-row" id="durGroup">
+      <button type="button" class="seg-btn" data-val="15" onclick="pickOpt('dur', '15', this)">15s</button>
+      <button type="button" class="seg-btn active" data-val="30" onclick="pickOpt('dur', '30', this)">30s</button>
+      <button type="button" class="seg-btn" data-val="60" onclick="pickOpt('dur', '60', this)">60s</button>
+    </div>
+  </div>
+  <div class="opt-box">
+    <div class="opt-title">Aspect Ratio</div>
+    <div class="seg-row" id="ratioGroup">
+      <button type="button" class="seg-btn active" data-val="9:16" onclick="pickOpt('ratio', '9:16', this)">9:16</button>
+      <button type="button" class="seg-btn" data-val="16:9" onclick="pickOpt('ratio', '16:9', this)">16:9</button>
+      <button type="button" class="seg-btn" data-val="AUTO" onclick="pickOpt('ratio', 'AUTO', this)">AUTO</button>
+    </div>
+  </div>
+  <div class="opt-box">
+    <div class="opt-title">AI Captions</div>
+    <div class="seg-row" id="capGroup">
+      <button type="button" class="seg-btn active" data-val="true" onclick="pickOpt('cap', 'true', this)">ON</button>
+      <button type="button" class="seg-btn" data-val="false" onclick="pickOpt('cap', 'false', this)">OFF</button>
+    </div>
+  </div>
+</div>
+<label class="capcut-bar" id="capcutToggleWrap">
+  <span><strong>CapCut Pro Shorts Auto-Handoff:</strong> Automatically open generated 9:16 Shorts in local CapCut Desktop</span>
+  <input type="checkbox" id="autoCapcutChk" />
+</label>
+<button type="button" class="primary-btn" id="startBtn" onclick="startJob()">Generate Viral Clips</button>
+        <div class="status-msg" id="statusMsg"></div>
+      </div>
+
+      <div class="card" id="workspaceCard">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+          <h2 id="activeTitle" style="margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Pipeline Monitor</h2>
+          <span id="activeStatus" style="font-size: 0.8rem; color: var(--muted); white-space: nowrap;">Idle</span>
+        </div>
+
+        <div class="progress-wrap">
+          <div class="progress-top">
+            <span class="progress-detail" id="progressDetail">Ready — submit a video URL or upload a file to begin.</span>
+            <div class="progress-stats">
+              <span style="color: var(--muted); font-size: 0.78rem;" id="elapsedLabel">00:00</span>
+              <span class="pct-badge" id="pctBadge">0%</span>
+            </div>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+        </div>
+
+        <div class="stepper">
+          <div class="step" id="st1">1. Ingest</div>
+          <div class="step" id="st2">2. Audio</div>
+          <div class="step" id="st3">3. Whisper STT</div>
+          <div class="step" id="st4">4. Viral AI</div>
+          <div class="step" id="st5">5. 9:16 Render</div>
+        </div>
+
+        <div class="activity-log hidden" id="activityLog"></div>
+        <div id="transcriptBox" class="hidden" style="background: var(--panel-2); padding: 12px; border-radius: 10px; font-size: 0.8rem; color: var(--muted); max-height: 110px; overflow-y: auto; margin-bottom: 12px;"></div>
+        <div id="autoProBar" style="display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 0 6px;padding:10px 14px;border-radius:12px;background:rgba(15,23,42,0.78);border:1px solid rgba(6,182,212,0.3);">
+  <div style="font-size:0.82rem;color:#cbd5e1;">
+    <strong style="color:#67e8f9;">Auto AI Pro Mode:</strong> Batch-generate punch-zoom, graded &amp; normalized Pro clips below each clip.
+  </div>
+  <button type="button" id="autoProBtn" onclick="runAutoAiPro()" style="padding:8px 14px;border-radius:9px;border:none;background:linear-gradient(135deg,#6366f1,#06b6d4);color:#fff;font-weight:700;font-size:0.82rem;cursor:pointer;">
+    Auto AI Pro Generate All
+  </button>
+</div>
+<div id="autoProStatus" style="font-size:0.8rem;color:#67e8f9;min-height:16px;margin-bottom:4px;"></div>
+<div class="clips-grid" id="clipsGrid"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    CONTACT DC : <strong>lapizoa</strong> &nbsp;|&nbsp; MADE BY : <span>Whiskeyy.OG</span>
+  </footer>
+
+  <script>
+    let currentTab = "url";
+    let activeProjectId = null;
+    let pollTimer = null;
+    let lastLoggedDetail = "";
+    let loggedProjectId = null;
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function formatElapsed(sec) {
+      const m = String(Math.floor((sec || 0) / 60)).padStart(2, "0");
+      const s = String((sec || 0) % 60).padStart(2, "0");
+      return `${m}:${s}`;
+    }
+
+    function appendLog(text, kind = "") {
+      const box = document.getElementById("activityLog");
+      box.classList.remove("hidden");
+      const now = new Date().toLocaleTimeString([], { hour12: false });
+      const line = document.createElement("div");
+      line.className = "log-line " + kind;
+      line.innerHTML = `<span class="ts">[${now}]</span>${text}`;
+      box.appendChild(line);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.getElementById("btnTabUrl").classList.toggle("active", tab === "url");
+      document.getElementById("btnTabFile").classList.toggle("active", tab === "file");
+      document.getElementById("panelUrl").classList.toggle("hidden", tab !== "url");
+      document.getElementById("panelFile").classList.toggle("hidden", tab !== "file");
+      document.getElementById("statusMsg").textContent = "";
+    }
+
+    function onFilePicked(input) {
+      const f = input.files && input.files[0];
+      document.getElementById("fileLabel").textContent = f ? `Selected: ${f.name}` : "Click to choose an MP4 / MOV / MKV file";
+    }
+
+    let selectedDur = "30";
+    let selectedRatio = "9:16";
+    let selectedCap = "true";
+
+    function pickOpt(kind, val, btn) {
+      const groupId = kind === "dur" ? "durGroup" : (kind === "ratio" ? "ratioGroup" : "capGroup");
+      document.querySelectorAll(`#${groupId} .seg-btn`).forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      if (kind === "dur") selectedDur = val;
+      if (kind === "ratio") {
+        selectedRatio = val;
+        const wrap = document.getElementById("capcutToggleWrap");
+        const chk = document.getElementById("autoCapcutChk");
+        if (val === "16:9") {
+          chk.checked = false;
+          chk.disabled = true;
+          wrap.style.opacity = "0.45";
+        } else {
+          chk.disabled = false;
+          wrap.style.opacity = "1";
+        }
+      }
+      if (kind === "cap") selectedCap = val;
+    }
+
+    async function openInCapCut(projectId, clipIndex, btnEl) {
+      const orig = btnEl.textContent;
+      btnEl.textContent = "Launching CapCut...";
+      btnEl.disabled = true;
+      try {
+        const res = await fetch(`/api/projects/${projectId}/clips/${clipIndex}/capcut`, {
+          method: "POST",
+          credentials: "same-origin"
+        });
+        const data = await res.json();
+        btnEl.textContent = res.ok ? (data.message || "Opened in CapCut!") : (data.detail || "CapCut launch failed");
+      } catch (e) {
+        btnEl.textContent = "Error launching CapCut";
+      }
+      setTimeout(() => {
+        btnEl.textContent = orig;
+        btnEl.disabled = false;
+      }, 3500);
+    }
+
+    function setPrompt(text) {
+      document.getElementById("promptInput").value = text;
+    }
+
+    async function initStudio() {
+      const badge = document.getElementById("userBadge");
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "same-origin" });
+        if (res.status === 401) { window.location.href = "/login"; return; }
+        if (!res.ok) throw new Error("Server error " + res.status);
+        const data = await res.json();
+        const email = data.user.email || data.user.username;
+        badge.textContent = `${email} (${data.user.role})`;
+        if (data.user.role === "admin") document.getElementById("adminLink").classList.remove("hidden");
+        if (data.config && data.config.allow_url_download === false && data.user.role !== "admin") {
+          switchTab("file");
+          document.getElementById("btnTabUrl").disabled = true;
+        }
+      } catch (err) {
+        badge.textContent = "Offline / Retry";
+        document.getElementById("statusMsg").textContent = "Could not connect to backend: " + err.message;
+      }
+      loadProjects();
+    }
+
+    async function loadProjects() {
+      try {
+        const res = await fetch("/api/projects", { credentials: "same-origin" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const list = document.getElementById("projectList");
+        if (!data.projects || data.projects.length === 0) return;
+
+        list.innerHTML = data.projects.map(p => `
+          <div class="proj-item ${p.project_id === activeProjectId ? 'active' : ''}" onclick="selectProject('${p.project_id}')">
+            <div class="proj-title">${p.source_label || p.project_id}</div>
+            <div class="proj-meta">
+              <span>${p.stage}</span>
+              <span>${p.progress || 0}%</span>
+            </div>
+            <div class="mini-bar"><div class="mini-bar-fill" style="width:${p.progress || 0}%"></div></div>
+          </div>
+        `).join("");
+
+        if (!activeProjectId && data.projects[0]) selectProject(data.projects[0].project_id);
+      } catch (err) {
+        console.error("selectProject error:", err);
+        const gridErr = document.getElementById("clipsGrid");
+        if (gridErr) {
+          gridErr.innerHTML = `<div style="color:#f87171;font-size:0.84rem;padding:8px 0;">UI render error: ${escapeHtml(err.message || err)}</div>`;
+        }
+      }
+    }
+
+    async function startJob() {
+      const btn = document.getElementById("startBtn");
+      const msg = document.getElementById("statusMsg");
+      const prompt = document.getElementById("promptInput").value.trim() || "Edit like a viral short-form editor";
+      msg.textContent = "";
+
+      const fd = new FormData();
+      fd.append("prompt", prompt);
+      fd.append("clip_duration", selectedDur);
+      fd.append("aspect_ratio", selectedRatio);
+      fd.append("captions_enabled", selectedCap);
+      fd.append("auto_capcut", (selectedRatio !== "16:9" && document.getElementById("autoCapcutChk").checked) ? "true" : "false");
+
+      let endpoint = "/api/projects/from-url";
+      if (currentTab === "url") {
+        const url = document.getElementById("videoUrl").value.trim();
+        if (!url) { msg.textContent = "Please paste a valid video URL first."; return; }
+        fd.append("url", url);
+      } else {
+        const fileInput = document.getElementById("videoFile");
+        if (!fileInput.files || !fileInput.files[0]) { msg.textContent = "Please select a video file first."; return; }
+        fd.append("file", fileInput.files[0]);
+        endpoint = "/api/projects/upload";
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Starting Workflow...";
+      try {
+        const res = await fetch(endpoint, { method: "POST", body: fd, credentials: "same-origin" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Failed to start job");
+        msg.textContent = "Queued: " + data.project_id;
+        activeProjectId = data.project_id;
+        await loadProjects();
+        selectProject(data.project_id);
+      } catch (err) {
+        msg.textContent = err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Generate Viral Clips";
+      }
+    }
+
+    function selectProject(projectId) {
+      activeProjectId = projectId;
+      if (loggedProjectId !== projectId) {
+        loggedProjectId = projectId;
+        lastLoggedDetail = "";
+        const box = document.getElementById("activityLog");
+        box.innerHTML = "";
+        box.classList.add("hidden");
+      }
+      if (pollTimer) clearInterval(pollTimer);
+      refreshProject(projectId);
+      pollTimer = setInterval(() => refreshProject(projectId), 2000);
+    }
+
+    async function refreshProject(projectId) {
+      try {
+        const res = await fetch(`/api/projects/${projectId}`, { credentials: "same-origin" });
+        if (!res.ok) return;
+        const p = await res.json();
+
+        document.getElementById("activeTitle").textContent = p.source_label || p.project_id;
+        document.getElementById("activeStatus").textContent = `${p.status} — ${p.stage}`;
+        document.getElementById("elapsedLabel").textContent = formatElapsed(p.elapsed_sec);
+
+        const pct = p.progress || 0;
+        const isFailed = ["FAILED", "TERMINATED", "TIMED_OUT", "CANCELED"].includes(p.status);
+        const isDone = p.stage === "Completed";
+
+        const pctBadge = document.getElementById("pctBadge");
+        const fill = document.getElementById("progressFill");
+        const detailEl = document.getElementById("progressDetail");
+
+        pctBadge.textContent = isFailed ? "FAILED" : `${pct}%`;
+        pctBadge.classList.toggle("done", isDone);
+        pctBadge.classList.toggle("error", isFailed);
+
+        fill.style.width = `${pct}%`;
+        fill.classList.toggle("done", isDone);
+        fill.classList.toggle("error", isFailed);
+
+        const detailText = p.detail || p.stage;
+        detailEl.textContent = detailText;
+        detailEl.classList.toggle("error", isFailed);
+
+        if (detailText && detailText !== lastLoggedDetail) {
+          lastLoggedDetail = detailText;
+          appendLog(detailText, isFailed ? "err" : (isDone ? "ok" : ""));
+        }
+
+        const stageOrder = [
+          "Downloading Source Video",
+          "Extracting Audio",
+          "Transcribing Audio (Whisper)",
+          "Detecting Viral Highlights (AI)",
+          "Rendering 9:16 Clips (Face-Tracking + Hook + Captions)",
+          "Completed"
+        ];
+        const idx = stageOrder.indexOf(p.stage);
+        for (let i = 1; i <= 5; i++) {
+          const el = document.getElementById("st" + i);
+          el.classList.remove("done", "active");
+          if (idx >= i || isDone) el.classList.add("done");
+          else if (idx === i - 1 && !isFailed) el.classList.add("active");
+        }
+
+        const tBox = document.getElementById("transcriptBox");
+        if (p.transcript_preview) {
+          tBox.classList.remove("hidden");
+          tBox.textContent = "Transcript: " + p.transcript_preview;
+        } else {
+          tBox.classList.add("hidden");
+        }
+
+        const grid = document.getElementById("clipsGrid");
+        const autoBar = document.getElementById("autoProBar");
+        if (autoBar) autoBar.style.display = (p.clips && p.clips.length > 0) ? "flex" : "none";
+        if (p.clips && p.clips.length > 0) {
+          const normalClips = p.clips.filter(c => !c.is_pro_edit);
+          const proClips = p.clips.filter(c => !!c.is_pro_edit);
+          const orderedClips = [];
+          normalClips.forEach((c, idx) => {
+            const clipNum = c.clip_index || (idx + 1);
+            orderedClips.push({ clip: c, idx, isPro: false });
+            const matchedPro = proClips.filter(pc => Number(pc.parent_clip_index) === Number(clipNum));
+            matchedPro.forEach(pc => orderedClips.push({ clip: pc, idx, isPro: true }));
+          });
+          proClips.forEach(pc => {
+            const alreadyPlaced = orderedClips.some(item => item.clip === pc);
+            if (!alreadyPlaced) orderedClips.push({ clip: pc, idx: orderedClips.length, isPro: true });
+          });
+
+          grid.innerHTML = orderedClips.map(({ clip: c, idx, isPro }) => {
+            const defaultLabel = isPro ? `PRO \u2014 Viral Clip #${idx + 1}` : `Viral Clip #${idx + 1}`;
+            const displayTitle = c.hook || c.title || defaultLabel;
+            const dlName = isPro ? `pro_clip_${idx + 1}.mp4` : `clip_${idx + 1}.mp4`;
+            const badgeHtml = isPro
+              ? `<span style="display:inline-block;margin-bottom:4px;padding:2px 7px;border-radius:999px;font-size:0.68rem;font-weight:700;background:rgba(6,182,212,0.18);color:#67e8f9;border:1px solid rgba(6,182,212,0.4);">STUDIO PRO</span>`
+              : '';
+            return `
+            <div class="clip-card" style="${isPro ? 'border-color:rgba(6,182,212,0.45);' : ''}">
+              <video controls playsinline class="${c.aspect_ratio === '16:9' ? 'wide-video' : ''}" src="${c.video_url}"></video>
+              <div class="clip-body">
+                ${badgeHtml}
+                <div class="clip-title">${escapeHtml(displayTitle)}</div>
+                <a class="dl-btn" href="${c.video_url}" download="${dlName}">Download ${c.aspect_ratio === '16:9' ? '16:9' : '9:16'} MP4</a>
+${(!isPro && c.aspect_ratio !== '16:9') ? `<button type="button" class="capcut-btn" onclick="openStudioPro('${p.project_id}', ${c.clip_index || (idx + 1)}, '${escapeHtml(displayTitle)}', ${c.captions_enabled !== false})">Studio Pro Polish &amp; Zoom</button>` : ''}
+              </div>
+            </div>
+          `;
+          }).join("");
+        } else {
+          grid.innerHTML = "";
+        }
+
+        if (isDone || isFailed) {
+          if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+          loadProjects();
+        }
+      } catch (_) {}
+    }
+
+    async function logout() {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
+      window.location.href = "/login";
+    }
+
+    initStudio();
+  </script>
+
+<div id="proModal" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.82);backdrop-filter:blur(8px);z-index:999;align-items:center;justify-content:center;padding:18px;">
+  <div style="width:100%;max-width:440px;background:#0f172a;border:1px solid rgba(99,102,241,0.45);border-radius:16px;padding:22px;color:#f8fafc;box-shadow:0 24px 60px rgba(0,0,0,0.65);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div>
+        <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:#67e8f9;font-weight:700;">Built-In Shorts Editor</div>
+        <h3 id="proModalTitle" style="margin:2px 0 0;font-size:1.1rem;">Studio Pro Polish</h3>
+      </div>
+      <button type="button" onclick="closeStudioPro()" style="background:none;border:none;color:#94a3b8;font-size:1.3rem;cursor:pointer;">?</button>
+    </div>
+
+        <label style="display:block;font-size:0.78rem;color:#94a3b8;margin-top:10px;">Pro Clip Name</label>
+    <input id="proNameInput" type="text" placeholder="PRO — Viral Clip" style="width:100%;margin-top:5px;padding:9px 10px;border-radius:9px;background:#1e293b;color:#f8fafc;border:1px solid #334155;" />
+
+    <label style="display:block;font-size:0.78rem;color:#94a3b8;margin-top:10px;">Visual &amp; Color Preset</label>
+    <select id="proPreset" style="width:100%;margin-top:5px;padding:9px 10px;border-radius:9px;background:#1e293b;color:#f8fafc;border:1px solid #334155;">
+      <option value="punch_glow">CapCut Punch &amp; Glow (Balanced)</option>
+      <option value="cinema_pop">Cinema Hormozi (High Contrast + Pop)</option>
+      <option value="clean_master">Clean Master (No Burned Captions)</option>
+    </select>
+
+    
+    <label style="display:block;font-size:0.78rem;color:#94a3b8;margin-top:12px;">Streamer &amp; Gameplay Layout</label>
+    <select id="proLayoutMode" onchange="syncProLayoutUi()" style="width:100%;margin-top:5px;padding:9px 10px;border-radius:9px;background:#1e293b;color:#f8fafc;border:1px solid #334155;">
+      <option value="auto">Standard Frame / Face-Track</option>
+      <option value="split_916">9:16 Split ? Webcam Top / Gameplay Bottom</option>
+      <option value="game_top">9:16 Split ? Gameplay Top / Webcam Bottom</option>
+      <option value="pip_169">16:9 Streamer Webcam + Gameplay PiP</option>
+    </select>
+
+    <div id="proLayoutControls" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(15,23,42,0.75);border:1px solid rgba(148,163,184,0.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:#cbd5e1;">
+        <span>Secondary / Split Size</span>
+        <strong id="proSizeVal" style="color:#67e8f9;">35%</strong>
+      </div>
+      <input id="proSecSize" type="range" min="15" max="60" value="35" oninput="document.getElementById('proSizeVal').textContent = this.value + '%'" style="width:100%;margin-top:4px;accent-color:#06b6d4;" />
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+        <div>
+          <label style="display:block;font-size:0.72rem;color:#94a3b8;">Cam / Overlay X (%)</label>
+          <input id="proCamX" type="number" min="0" max="100" value="82" style="width:100%;margin-top:3px;padding:6px 8px;border-radius:7px;background:#1e293b;color:#f8fafc;border:1px solid #334155;font-size:0.8rem;" />
+        </div>
+        <div>
+          <label style="display:block;font-size:0.72rem;color:#94a3b8;">Cam / Overlay Y (%)</label>
+          <input id="proCamY" type="number" min="0" max="100" value="18" style="width:100%;margin-top:3px;padding:6px 8px;border-radius:7px;background:#1e293b;color:#f8fafc;border:1px solid #334155;font-size:0.8rem;" />
+        </div>
+        <div>
+          <label style="display:block;font-size:0.72rem;color:#94a3b8;">Gameplay X (%)</label>
+          <input id="proGameX" type="number" min="0" max="100" value="50" style="width:100%;margin-top:3px;padding:6px 8px;border-radius:7px;background:#1e293b;color:#f8fafc;border:1px solid #334155;font-size:0.8rem;" />
+        </div>
+        <div>
+          <label style="display:block;font-size:0.72rem;color:#94a3b8;">Gameplay Y (%)</label>
+          <input id="proGameY" type="number" min="0" max="100" value="50" style="width:100%;margin-top:3px;padding:6px 8px;border-radius:7px;background:#1e293b;color:#f8fafc;border:1px solid #334155;font-size:0.8rem;" />
+        </div>
+      </div>
+
+      <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:0.8rem;color:#cbd5e1;cursor:pointer;">
+        <input type="checkbox" id="proSwapRegions" />
+        <span>Swap Streamer &amp; Gameplay positions</span>
+      </label>
+    </div>
+
+<label style="display:block;font-size:0.78rem;color:#94a3b8;margin-top:12px;">Punch-Zoom Intensity</label>
+    <select id="proZoom" style="width:100%;margin-top:5px;padding:9px 10px;border-radius:9px;background:#1e293b;color:#f8fafc;border:1px solid #334155;">
+      <option value="1.0">Off (1.00x Steady)</option>
+      <option value="1.05">Subtle (1.05x Beat Pulse)</option>
+      <option value="1.08" selected>Punchy Short (1.08x Dynamic)</option>
+      <option value="1.12">High Impact (1.12x Zoom)</option>
+    </select>
+
+    <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:0.84rem;color:#cbd5e1;cursor:pointer;">
+      <input type="checkbox" id="proCaptions" checked />
+      <span>Burn animated karaoke hook &amp; captions</span>
+    </label>
+
+    <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:0.84rem;color:#cbd5e1;cursor:pointer;">
+      <input type="checkbox" id="proLoudnorm" checked />
+      <span>Normalize audio loudness (-14 LUFS for Shorts/Reels)</span>
+    </label>
+
+    <div id="proProgressWrap" style="display:none;margin-top:12px;background:rgba(15,23,42,0.85);border:1px solid rgba(103,232,249,0.22);border-radius:10px;padding:10px 12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:#cbd5e1;margin-bottom:6px;">
+        <span id="proStageLabel">Preparing FFmpeg pipeline...</span>
+        <strong id="proPctLabel" style="color:#67e8f9;">0%</strong>
+      </div>
+      <div style="width:100%;height:8px;background:#1e293b;border-radius:999px;overflow:hidden;">
+        <div id="proProgressBar" style="width:0%;height:100%;background:linear-gradient(90deg,#6366f1,#06b6d4,#4ade80);border-radius:999px;transition:width 0.25s ease;"></div>
+      </div>
+    </div>
+
+    <div id="proStatus" style="margin-top:8px;font-size:0.82rem;color:#67e8f9;min-height:18px;"></div>
+
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button type="button" onclick="closeStudioPro()" style="flex:1;padding:10px;border-radius:9px;border:1px solid #334155;background:#1e293b;color:#cbd5e1;font-weight:600;cursor:pointer;">Cancel</button>
+      <button type="button" id="proApplyBtn" onclick="applyStudioPro()" style="flex:2;padding:10px;border-radius:9px;border:none;background:linear-gradient(135deg,#6366f1,#06b6d4);color:#fff;font-weight:700;cursor:pointer;">Render Studio Pro Clip</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let proTarget = null;
+let proProgressTimer = null;
+
+function setProProgress(pct, label) {
+  const wrap = document.getElementById("proProgressWrap");
+  const bar = document.getElementById("proProgressBar");
+  const pctEl = document.getElementById("proPctLabel");
+  const stageEl = document.getElementById("proStageLabel");
+  if (!wrap || !bar || !pctEl || !stageEl) return;
+  const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+  wrap.style.display = "block";
+  bar.style.width = `${clamped}%`;
+  pctEl.textContent = `${clamped}%`;
+  if (label) stageEl.textContent = label;
+}
+
+function resetProProgress() {
+  if (proProgressTimer) {
+    clearInterval(proProgressTimer);
+    proProgressTimer = null;
+  }
+  const wrap = document.getElementById("proProgressWrap");
+  const bar = document.getElementById("proProgressBar");
+  const pctEl = document.getElementById("proPctLabel");
+  const stageEl = document.getElementById("proStageLabel");
+  if (wrap) wrap.style.display = "none";
+  if (bar) bar.style.width = "0%";
+  if (pctEl) pctEl.textContent = "0%";
+  if (stageEl) stageEl.textContent = "Preparing FFmpeg pipeline...";
+}
+
+
+function syncProLayoutUi() {
+  const mode = document.getElementById("proLayoutMode")?.value || "auto";
+  const box = document.getElementById("proLayoutControls");
+  if (box) box.style.display = (mode === "auto") ? "none" : "block";
+}
+
+function openStudioPro(projectId, clipIndex, title, hasCaps) {
+  proTarget = { projectId, clipIndex };
+  resetProProgress();
+  const baseTitle = String(title || "Clip").replace(/^PRO\s*[\u2014-]\s*/i, "");
+  document.getElementById("proModalTitle").textContent = `Studio Pro \u2014 ${baseTitle}`;
+  document.getElementById("proNameInput").value = `PRO \u2014 ${baseTitle}`;
+  document.getElementById("proCaptions").checked = !!hasCaps;
+  document.getElementById("proStatus").textContent = "";
+  syncProLayoutUi();
+  document.getElementById("proModal").style.display = "flex";
+}
+
+function closeStudioPro() {
+  resetProProgress();
+  document.getElementById("proModal").style.display = "none";
+  proTarget = null;
+}
+
+async function applyStudioPro() {
+  if (!proTarget) return;
+  const btn = document.getElementById("proApplyBtn");
+  const status = document.getElementById("proStatus");
+  btn.disabled = true;
+  btn.textContent = "Rendering with FFmpeg...";
+  status.textContent = "";
+
+  let simPct = 8;
+  setProProgress(simPct, "Tracking crop & building filter graph...");
+  proProgressTimer = setInterval(() => {
+    if (simPct < 35) {
+      simPct += 7;
+      setProProgress(simPct, "Applying punch-zoom & color grade...");
+    } else if (simPct < 72) {
+      simPct += 5;
+      setProProgress(simPct, "Encoding H.264 clip & captions...");
+    } else if (simPct < 92) {
+      simPct += 2;
+      setProProgress(simPct, "Normalizing audio loudness...");
+    }
+  }, 450);
+
+  try {
+    const res = await fetch(`/api/projects/${proTarget.projectId}/clips/${proTarget.clipIndex}/pro-polish`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        pro_name: document.getElementById("proNameInput").value.trim(),
+        layout_mode: document.getElementById("proLayoutMode").value,
+        swap_regions: document.getElementById("proSwapRegions").checked,
+        secondary_size: parseFloat(document.getElementById("proSecSize").value) / 100.0,
+        cam_x: parseFloat(document.getElementById("proCamX").value) / 100.0,
+        cam_y: parseFloat(document.getElementById("proCamY").value) / 100.0,
+        game_x: parseFloat(document.getElementById("proGameX").value) / 100.0,
+        game_y: parseFloat(document.getElementById("proGameY").value) / 100.0,
+        preset: document.getElementById("proPreset").value,
+        zoom_scale: parseFloat(document.getElementById("proZoom").value),
+        captions_enabled: document.getElementById("proCaptions").checked,
+        normalize_audio: document.getElementById("proLoudnorm").checked
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Polish failed");
+    if (proProgressTimer) {
+      clearInterval(proProgressTimer);
+      proProgressTimer = null;
+    }
+    setProProgress(100, "Studio Pro render complete!");
+    status.textContent = "Updated! Refreshing preview...";
+    if (typeof selectProject === "function") await selectProject(proTarget.projectId);
+    setTimeout(closeStudioPro, 600);
+  } catch (e) {
+    if (proProgressTimer) {
+      clearInterval(proProgressTimer);
+      proProgressTimer = null;
+    }
+    setProProgress(100, "Render interrupted");
+    document.getElementById("proProgressBar").style.background = "#f87171";
+    status.textContent = e.message || "Error rendering clip";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Render Studio Pro Clip";
+  }
+}
+</script>
+
+
+<script>
+async function runAutoAiPro() {
+  if (!activeProjectId) return;
+  const btn = document.getElementById("autoProBtn");
+  const status = document.getElementById("autoProStatus");
+  if (!btn || !status) return;
+  btn.disabled = true;
+  btn.textContent = "Auto-Generating Pro Clips...";
+  status.textContent = "Running AI Pro punch-zoom, color polish, and audio normalization on clips...";
+  try {
+    const res = await fetch(`/api/projects/${activeProjectId}/auto-pro`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        preset: "punch_glow",
+        zoom_scale: 1.08,
+        captions_enabled: true,
+        normalize_audio: true
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Auto AI Pro generation failed");
+    status.textContent = `Generated ${data.count} AI PRO clip(s) below your normal clips!`;
+    if (typeof selectProject === "function") await selectProject(activeProjectId);
+  } catch (err) {
+    status.textContent = err.message || "Error during Auto AI Pro generation";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Auto AI Pro Generate All";
+  }
+}
+</script>
+
+<footer id="clippingOsFooter" style="text-align:center;padding:24px 12px;font-size:0.82rem;color:#94a3b8;">
+  <a href="/privacy" style="color:#67e8f9;text-decoration:none;">Privacy Policy</a>
+  <span style="margin:0 8px;">&middot;</span>
+  <a href="mailto:krishivkhetalpar1@gmail.com" style="color:#94a3b8;text-decoration:none;">krishivkhetalpar1@gmail.com</a>
+</footer>
+<style id="clippingOsLayoutPreviewStyle">
+  #cosLayoutPreviewWrap {
+    margin: 12px 0 14px;
+    padding: 12px;
+    border-radius: 12px;
+    background: #090f1d;
+    border: 1px solid #1e293b;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  #cosLayoutPreviewHeader {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    color: #94a3b8;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  #cosLayoutPreviewHeader strong {
+    color: #e2e8f0;
+    font-size: 0.84rem;
+  }
+  #cosPreviewFrame916 {
+    position: relative;
+    width: 162px;
+    height: 288px; /* 9:16 vertical aspect */
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1.5px solid #334155;
+    background: #020617;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+  }
+  .cos-zone {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 4px;
+    box-sizing: border-box;
+    transition: all 0.14s ease;
+    user-select: none;
+  }
+  .cos-zone-main {
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(160deg, rgba(14, 116, 144, 0.35), rgba(30, 41, 59, 0.85));
+    color: #e0f2fe;
+    border: 1px dashed rgba(56, 189, 248, 0.55);
+  }
+  .cos-zone-secondary {
+    background: linear-gradient(145deg, rgba(124, 58, 237, 0.42), rgba(15, 23, 42, 0.92));
+    color: #f3e8ff;
+    border: 1px dashed rgba(192, 132, 252, 0.75);
+    z-index: 2;
+  }
+  .cos-zone-caption {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    bottom: 11%;
+    padding: 3px 6px;
+    border-radius: 5px;
+    background: rgba(2, 6, 23, 0.78);
+    border: 1px solid rgba(250, 204, 21, 0.45);
+    color: #fde047;
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-align: center;
+    z-index: 3;
+    pointer-events: none;
+  }
+  #cosLayoutPreviewNote {
+    font-size: 0.73rem;
+    color: #94a3b8;
+    text-align: center;
+  }
+</style>
+
+<div id="cosLayoutPreviewWrap" aria-label="9:16 Layout Preview">
+  <div id="cosLayoutPreviewHeader">
+    <strong>9:16 Layout &amp; Crop Preview</strong>
+    <span id="cosLayoutModeBadge">Mode: auto</span>
+  </div>
+  <div id="cosPreviewFrame916">
+    <div id="cosZoneMain" class="cos-zone cos-zone-main">Main / Gameplay</div>
+    <div id="cosZoneSecondary" class="cos-zone cos-zone-secondary" style="display:none;">Cam / PiP</div>
+    <div id="cosZoneCaption" class="cos-zone-caption">Captions Zone</div>
+  </div>
+  <div id="cosLayoutPreviewNote">Updates automatically from layout mode, zoom, and position inputs.</div>
+</div>
+
+<script id="clippingOsLayoutPreviewScript">
+(function () {
+  function clamp(val, min, max, fallback) {
+    const n = parseFloat(val);
+    if (Number.isNaN(n)) return fallback;
+    return Math.min(max, Math.max(min, n));
+  }
+
+  function findControl(modalRoot, patterns) {
+    if (!modalRoot) return null;
+    const controls = Array.from(modalRoot.querySelectorAll("input, select"));
+    for (const pat of patterns) {
+      const rx = new RegExp(pat, "i");
+      const match = controls.find((el) => {
+        const hay = [
+          el.id || "",
+          el.name || "",
+          el.getAttribute("data-field") || "",
+          el.placeholder || "",
+          el.getAttribute("aria-label") || "",
+          (el.closest("label") && el.closest("label").textContent) || "",
+          (el.parentElement && el.parentElement.textContent && el.parentElement.textContent.slice(0, 60)) || "",
+        ].join(" ");
+        return rx.test(hay);
+      });
+      if (match) return match;
+    }
+    return null;
+  }
+
+  function refreshPreview() {
+    const wrap = document.getElementById("cosLayoutPreviewWrap");
+    if (!wrap) return;
+
+    const modalRoot =
+      wrap.closest('[id*="pro" i][id*="modal" i], [class*="pro" i][class*="modal" i], [id*="modal" i], [class*="modal" i]') ||
+      document;
+
+    const modeCtrl = findControl(modalRoot, ["layout", "mode", "split", "pip"]);
+    const zoomCtrl = findControl(modalRoot, ["zoom", "scale"]);
+    const camXCtrl = findControl(modalRoot, ["cam.*x", "overlay.*x", "pip.*x", "face.*x"]);
+    const camYCtrl = findControl(modalRoot, ["cam.*y", "overlay.*y", "pip.*y", "face.*y"]);
+    const camSCtrl = findControl(modalRoot, ["cam.*size", "overlay.*size", "pip.*size", "cam.*scale", "overlay.*scale"]);
+    const gameXCtrl = findControl(modalRoot, ["game.*x", "gameplay.*x", "main.*x"]);
+    const gameYCtrl = findControl(modalRoot, ["game.*y", "gameplay.*y", "main.*y"]);
+
+    const rawMode = modeCtrl && modeCtrl.value ? String(modeCtrl.value).toLowerCase() : "auto";
+    const badge = document.getElementById("cosLayoutModeBadge");
+    const mainEl = document.getElementById("cosZoneMain");
+    const secEl = document.getElementById("cosZoneSecondary");
+    const capEl = document.getElementById("cosZoneCaption");
+    const noteEl = document.getElementById("cosLayoutPreviewNote");
+
+    if (badge) badge.textContent = "Mode: " + rawMode;
+
+    const zoom = zoomCtrl ? clamp(zoomCtrl.value, 0.5, 3.0, 1.0) : 1.0;
+    const zoomScale = Math.min(1.35, Math.max(0.85, 0.85 + (zoom - 1.0) * 0.25));
+
+    const isSplit = rawMode.includes("split");
+    const isPip = rawMode.includes("pip") || rawMode.includes("picture") || rawMode.includes("cam") || rawMode.includes("overlay");
+
+    // Reset defaults
+    mainEl.style.left = "0%";
+    mainEl.style.top = "0%";
+    mainEl.style.width = "100%";
+    mainEl.style.height = "100%";
+    mainEl.style.transform = `scale(${zoomScale.toFixed(2)})`;
+    mainEl.textContent = "Main / Crop";
+    secEl.style.display = "none";
+    secEl.style.transform = "none";
+    if (capEl) capEl.style.bottom = "11%";
+
+    if (isSplit) {
+      const splitRatio = 0.5;
+      const topPct = Math.round(splitRatio * 100);
+      const botPct = 100 - topPct;
+
+      const gx = gameXCtrl ? clamp(gameXCtrl.value, -1, 1, 0) : 0;
+      const gy = gameYCtrl ? clamp(gameYCtrl.value, -1, 1, 0) : 0;
+      mainEl.style.left = "0%";
+      mainEl.style.top = "0%";
+      mainEl.style.width = "100%";
+      mainEl.style.height = topPct + "%";
+      mainEl.style.transform = `translate(${(gx * 8).toFixed(1)}%, ${(gy * 8).toFixed(1)}%) scale(${zoomScale.toFixed(2)})`;
+      mainEl.textContent = "Top / Gameplay (" + topPct + "%)";
+
+      const cx = camXCtrl ? clamp(camXCtrl.value, -1, 1, 0) : 0;
+      const cy = camYCtrl ? clamp(camYCtrl.value, -1, 1, 0) : 0;
+      secEl.style.display = "flex";
+      secEl.style.left = "0%";
+      secEl.style.top = topPct + "%";
+      secEl.style.width = "100%";
+      secEl.style.height = botPct + "%";
+      secEl.style.transform = `translate(${(cx * 8).toFixed(1)}%, ${(cy * 8).toFixed(1)}%)`;
+      secEl.textContent = "Bottom / Cam (" + botPct + "%)";
+      if (capEl) capEl.style.bottom = "46%";
+      if (noteEl) noteEl.textContent = "Split view: top and bottom 9:16 regions shown.";
+    } else if (isPip) {
+      const sizeVal = camSCtrl ? clamp(camSCtrl.value, 0.1, 0.8, 0.28) : 0.28;
+      const wPct = Math.round(Math.min(62, Math.max(22, sizeVal * 100)));
+      const hPct = Math.round(wPct * 0.72);
+
+      const rawX = camXCtrl ? parseFloat(camXCtrl.value) : NaN;
+      const rawY = camYCtrl ? parseFloat(camYCtrl.value) : NaN;
+
+      let leftPct = 64;
+      let topPct = 6;
+      if (!Number.isNaN(rawX)) {
+        leftPct = rawX >= 0 && rawX <= 1 ? rawX * (100 - wPct) : ((Math.max(-1, Math.min(1, rawX)) + 1) / 2) * (100 - wPct);
+      }
+      if (!Number.isNaN(rawY)) {
+        topPct = rawY >= 0 && rawY <= 1 ? rawY * (100 - hPct) : ((Math.max(-1, Math.min(1, rawY)) + 1) / 2) * (100 - hPct);
+      }
+
+      secEl.style.display = "flex";
+      secEl.style.left = Math.max(2, Math.min(100 - wPct - 2, leftPct)).toFixed(1) + "%";
+      secEl.style.top = Math.max(2, Math.min(100 - hPct - 2, topPct)).toFixed(1) + "%";
+      secEl.style.width = wPct + "%";
+      secEl.style.height = hPct + "%";
+      secEl.textContent = "PiP";
+      if (capEl) capEl.style.bottom = "11%";
+      if (noteEl) noteEl.textContent = "PiP view: floating camera/overlay over 9:16 main frame.";
+    } else {
+      const gx = gameXCtrl ? clamp(gameXCtrl.value, -1, 1, 0) : 0;
+      const gy = gameYCtrl ? clamp(gameYCtrl.value, -1, 1, 0) : 0;
+      mainEl.style.transform = `translate(${(gx * 10).toFixed(1)}%, ${(gy * 10).toFixed(1)}%) scale(${zoomScale.toFixed(2)})`;
+      if (noteEl) noteEl.textContent = "Full 9:16 crop preview with zoom & center offset.";
+    }
+  }
+
+  function mountPreview() {
+    const wrap = document.getElementById("cosLayoutPreviewWrap");
+    if (!wrap) return;
+
+    const candidates = Array.from(document.querySelectorAll('[id*="pro" i], [class*="pro" i]')).filter(
+      (el) => el !== wrap && !wrap.contains(el) && (el.id.toLowerCase().includes("modal") || el.className.toLowerCase().includes("modal"))
+    );
+    const targetModal = candidates[0];
+    if (targetModal) {
+      const bodyTarget =
+        targetModal.querySelector('[class*="body" i], [id*="body" i], form') || targetModal;
+      if (wrap.parentElement !== bodyTarget) {
+        bodyTarget.insertBefore(wrap, bodyTarget.firstChild);
+      }
+    }
+    refreshPreview();
+  }
+
+  document.addEventListener("input", refreshPreview, true);
+  document.addEventListener("change", refreshPreview, true);
+  document.addEventListener("click", function () {
+    setTimeout(mountPreview, 40);
+  }, true);
+  window.addEventListener("DOMContentLoaded", function () {
+    mountPreview();
+    setTimeout(mountPreview, 250);
+  });
+})();
+</script>
+<style id="clippingOsDraggablePreviewStyle">
+  #cosPreviewFrame916 {
+    touch-action: none;
+  }
+  .cos-zone {
+    cursor: grab;
+    touch-action: none;
+  }
+  .cos-zone.cos-dragging {
+    cursor: grabbing;
+    z-index: 10 !important;
+    outline: 2px solid #38bdf8;
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+  }
+</style>
+
+<script id="clippingOsDraggablePreviewScript">
+(function () {
+  function getModalRoot() {
+    const wrap = document.getElementById("cosLayoutPreviewWrap");
+    if (!wrap) return document;
+    return (
+      wrap.closest('[id*="pro" i][id*="modal" i], [class*="pro" i][class*="modal" i], [id*="modal" i], [class*="modal" i]') ||
+      document
+    );
+  }
+
+  function findCoordInputs(modalRoot, patterns) {
+    const controls = Array.from(modalRoot.querySelectorAll("input, select"));
+    for (const pat of patterns) {
+      const rx = new RegExp(pat, "i");
+      const match = controls.find((el) => {
+        if (el.tagName === "SELECT") return false;
+        const hay = [
+          el.id || "",
+          el.name || "",
+          el.getAttribute("data-field") || "",
+          el.placeholder || "",
+          el.getAttribute("aria-label") || "",
+          (el.closest("label") && el.closest("label").textContent) || "",
+          (el.parentElement && el.parentElement.textContent && el.parentElement.textContent.slice(0, 60)) || "",
+        ].join(" ");
+        return rx.test(hay);
+      });
+      if (match) return match;
+    }
+    return null;
+  }
+
+  function formatCoordValue(inputEl, norm01) {
+    const clamped01 = Math.min(1, Math.max(0, norm01));
+    const minAttr = parseFloat(inputEl.min);
+    const maxAttr = parseFloat(inputEl.max);
+    const stepAttr = parseFloat(inputEl.step);
+
+    let mapped = clamped01;
+    if (!Number.isNaN(minAttr) && !Number.isNaN(maxAttr) && maxAttr > minAttr) {
+      mapped = minAttr + clamped01 * (maxAttr - minAttr);
+    } else {
+      const cur = parseFloat(inputEl.value);
+      if (!Number.isNaN(cur) && cur < 0) {
+        mapped = clamped01 * 2 - 1;
+      } else if (!Number.isNaN(cur) && cur > 1 && cur <= 100) {
+        mapped = clamped01 * 100;
+      }
+    }
+
+    if (!Number.isNaN(stepAttr) && stepAttr > 0) {
+      const precision = (String(stepAttr).split(".")[1] || "").length;
+      mapped = Math.round(mapped / stepAttr) * stepAttr;
+      return mapped.toFixed(Math.min(4, precision));
+    }
+
+    if (Math.abs(mapped) <= 1.001) {
+      return mapped.toFixed(2);
+    }
+    return String(Math.round(mapped));
+  }
+
+  function setInputAndNotify(inputEl, newValStr) {
+    if (!inputEl) return;
+    if (String(inputEl.value) === String(newValStr)) return;
+    const proto = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value");
+    if (proto && proto.set) {
+      proto.set.call(inputEl, newValStr);
+    } else {
+      inputEl.value = newValStr;
+    }
+    inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+    inputEl.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  function attachDragHandlers() {
+    const frame = document.getElementById("cosPreviewFrame916");
+    const mainEl = document.getElementById("cosZoneMain");
+    const secEl = document.getElementById("cosZoneSecondary");
+    if (!frame || !mainEl || !secEl || frame.dataset.cosDragBound === "1") return;
+    frame.dataset.cosDragBound = "1";
+
+    let activeState = null;
+
+    function startDrag(zoneEl, isSecondary, e) {
+      if (zoneEl.style.display === "none") return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      const modalRoot = getModalRoot();
+      const xInput = isSecondary
+        ? findCoordInputs(modalRoot, ["cam.*x", "overlay.*x", "pip.*x", "face.*x", "\bx\b"])
+        : findCoordInputs(modalRoot, ["game.*x", "gameplay.*x", "main.*x", "\bx\b"]);
+      const yInput = isSecondary
+        ? findCoordInputs(modalRoot, ["cam.*y", "overlay.*y", "pip.*y", "face.*y", "\by\b"])
+        : findCoordInputs(modalRoot, ["game.*y", "gameplay.*y", "main.*y", "\by\b"]);
+
+      const frameRect = frame.getBoundingClientRect();
+      const zoneRect = zoneEl.getBoundingClientRect();
+
+      activeState = {
+        zoneEl,
+        isSecondary,
+        xInput,
+        yInput,
+        startClientX: e.clientX,
+        startClientY: e.clientY,
+        origLeftPx: zoneRect.left - frameRect.left,
+        origTopPx: zoneRect.top - frameRect.top,
+        zoneWidthPx: zoneRect.width,
+        zoneHeightPx: zoneRect.height,
+        frameWidthPx: Math.max(1, frameRect.width),
+        frameHeightPx: Math.max(1, frameRect.height),
+      };
+
+      zoneEl.classList.add("cos-dragging");
+      if (zoneEl.setPointerCapture && e.pointerId !== undefined) {
+        try {
+          zoneEl.setPointerCapture(e.pointerId);
+        } catch (_) {}
+      }
+    }
+
+    function moveDrag(e) {
+      if (!activeState) return;
+      e.preventDefault();
+
+      const dx = e.clientX - activeState.startClientX;
+      const dy = e.clientY - activeState.startClientY;
+
+      const maxLeft = Math.max(0, activeState.frameWidthPx - activeState.zoneWidthPx);
+      const maxTop = Math.max(0, activeState.frameHeightPx - activeState.zoneHeightPx);
+
+      const nextLeftPx = Math.min(maxLeft, Math.max(0, activeState.origLeftPx + dx));
+      const nextTopPx = Math.min(maxTop, Math.max(0, activeState.origTopPx + dy));
+
+      if (activeState.isSecondary && activeState.zoneEl.style.width !== "100%") {
+        // PiP floating box: map left/top across movable bounds
+        const normX = maxLeft > 0 ? nextLeftPx / maxLeft : 0.5;
+        const normY = maxTop > 0 ? nextTopPx / maxTop : 0.5;
+        activeState.zoneEl.style.left = ((nextLeftPx / activeState.frameWidthPx) * 100).toFixed(1) + "%";
+        activeState.zoneEl.style.top = ((nextTopPx / activeState.frameHeightPx) * 100).toFixed(1) + "%";
+        setInputAndNotify(activeState.xInput, formatCoordValue(activeState.xInput, normX));
+        setInputAndNotify(activeState.yInput, formatCoordValue(activeState.yInput, normY));
+      } else {
+        // Full-width / split region: map horizontal/vertical pan delta
+        const normX = maxLeft > 0 ? 0.5 + (nextLeftPx - activeState.origLeftPx) / activeState.frameWidthPx : 0.5;
+        const normY = maxTop > 0 ? 0.5 + (nextTopPx - activeState.origTopPx) / activeState.frameHeightPx : 0.5;
+        setInputAndNotify(activeState.xInput, formatCoordValue(activeState.xInput, normX));
+        setInputAndNotify(activeState.yInput, formatCoordValue(activeState.yInput, normY));
+      }
+    }
+
+    function endDrag(e) {
+      if (!activeState) return;
+      const zoneEl = activeState.zoneEl;
+      zoneEl.classList.remove("cos-dragging");
+      if (zoneEl.releasePointerCapture && e && e.pointerId !== undefined) {
+        try {
+          zoneEl.releasePointerCapture(e.pointerId);
+        } catch (_) {}
+      }
+      activeState = null;
+    }
+
+    mainEl.addEventListener("pointerdown", function (e) {
+      startDrag(mainEl, false, e);
+    });
+    secEl.addEventListener("pointerdown", function (e) {
+      startDrag(secEl, true, e);
+    });
+    window.addEventListener("pointermove", moveDrag, { passive: false });
+    window.addEventListener("pointerup", endDrag);
+    window.addEventListener("pointercancel", endDrag);
+  }
+
+  function init() {
+    attachDragHandlers();
+    const note = document.getElementById("cosLayoutPreviewNote");
+    if (note && !note.dataset.cosDragText) {
+      note.dataset.cosDragText = "1";
+      note.textContent = "Drag PiP or Split zones to update X/Y inputs automatically.";
+    }
+  }
+
+  document.addEventListener("click", function () {
+    setTimeout(init, 50);
+  }, true);
+  window.addEventListener("DOMContentLoaded", function () {
+    init();
+    setTimeout(init, 250);
+  });
+})();
+</script>
+<style id="clippingOsResetPosStyle">
+  #cosResetPosBtn {
+    padding: 4px 10px;
+    border-radius: 7px;
+    border: 1px solid #334155;
+    background: #1e293b;
+    color: #e2e8f0;
+    font-size: 0.74rem;
+    font-weight: 600;
+    cursor: pointer;
+    line-height: 1.2;
+    transition: background 0.14s ease, border-color 0.14s ease;
+  }
+  #cosResetPosBtn:hover {
+    background: #334155;
+    border-color: #38bdf8;
+    color: #f8fafc;
+  }
+  #cosResetPosBtn:active {
+    transform: translateY(1px);
+  }
+</style>
+
+<script id="clippingOsResetPosScript">
+(function () {
+  function getModalRoot() {
+    const wrap = document.getElementById("cosLayoutPreviewWrap");
+    if (!wrap) return document;
+    return (
+      wrap.closest('[id*="pro" i][id*="modal" i], [class*="pro" i][class*="modal" i], [id*="modal" i], [class*="modal" i]') ||
+      document
+    );
+  }
+
+  function findCoordInput(modalRoot, patterns) {
+    const controls = Array.from(modalRoot.querySelectorAll("input, select"));
+    for (const pat of patterns) {
+      const rx = new RegExp(pat, "i");
+      const match = controls.find((el) => {
+        if (el.tagName === "SELECT") return false;
+        const hay = [
+          el.id || "",
+          el.name || "",
+          el.getAttribute("data-field") || "",
+          el.placeholder || "",
+          el.getAttribute("aria-label") || "",
+          (el.closest("label") && el.closest("label").textContent) || "",
+          (el.parentElement && el.parentElement.textContent && el.parentElement.textContent.slice(0, 60)) || "",
+        ].join(" ");
+        return rx.test(hay);
+      });
+      if (match) return match;
+    }
+    return null;
+  }
+
+  function centeredValueFor(inputEl) {
+    const minAttr = parseFloat(inputEl.min);
+    const maxAttr = parseFloat(inputEl.max);
+    const stepAttr = parseFloat(inputEl.step);
+
+    let center = 0;
+    if (!Number.isNaN(minAttr) && !Number.isNaN(maxAttr) && maxAttr > minAttr) {
+      center = (minAttr + maxAttr) / 2;
+    } else {
+      const cur = parseFloat(inputEl.value);
+      if (!Number.isNaN(cur) && cur >= 0 && cur <= 1) {
+        center = 0.5;
+      } else if (!Number.isNaN(cur) && cur > 1 && cur <= 100) {
+        center = 50;
+      } else {
+        center = 0;
+      }
+    }
+
+    if (!Number.isNaN(stepAttr) && stepAttr > 0) {
+      const precision = (String(stepAttr).split(".")[1] || "").length;
+      center = Math.round(center / stepAttr) * stepAttr;
+      return center.toFixed(Math.min(4, precision));
+    }
+
+    if (Math.abs(center) === 0.5) return "0.50";
+    if (Math.abs(center) <= 1.001) return "0.00";
+    return String(Math.round(center));
+  }
+
+  function setInputValue(inputEl, valStr) {
+    if (!inputEl) return;
+    const proto = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value");
+    if (proto && proto.set) {
+      proto.set.call(inputEl, valStr);
+    } else {
+      inputEl.value = valStr;
+    }
+    inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+    inputEl.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  function resetAllPositions() {
+    const modalRoot = getModalRoot();
+    const targets = [
+      ["game.*x", "gameplay.*x", "main.*x", "\bx\b"],
+      ["game.*y", "gameplay.*y", "main.*y", "\by\b"],
+      ["cam.*x", "overlay.*x", "pip.*x", "face.*x"],
+      ["cam.*y", "overlay.*y", "pip.*y", "face.*y"],
+    ];
+
+    const updated = new Set();
+    for (const patterns of targets) {
+      const el = findCoordInput(modalRoot, patterns);
+      if (el && !updated.has(el)) {
+        updated.add(el);
+        setInputValue(el, centeredValueFor(el));
+      }
+    }
+  }
+
+  function ensureResetButton() {
+    const header = document.getElementById("cosLayoutPreviewHeader");
+    if (!header || document.getElementById("cosResetPosBtn")) return;
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.id = "cosResetPosBtn";
+    btn.textContent = "Reset Position";
+    btn.title = "Center X/Y coordinates";
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      resetAllPositions();
+    });
+
+    header.appendChild(btn);
+  }
+
+  document.addEventListener("click", function () {
+    setTimeout(ensureResetButton, 50);
+  }, true);
+  window.addEventListener("DOMContentLoaded", function () {
+    ensureResetButton();
+    setTimeout(ensureResetButton, 250);
+  });
+})();
+</script>
+<p style="font-size:0.78rem;color:#94a3b8;">Edit <code>YOUR_UPI_OR_PAYMENT_LINK</code> in <code>frontend/index.html</code> to set your real UPI ID or payment link.</p>
+    <div class="cos-fund-actions">
+      <button type="button" class="cos-fund-btn" id="cosCopyFundBtn">Copy Link / UPI</button>
+      <a class="cos-fund-btn" href="/support">Details</a>
+      <button type="button" class="cos-fund-btn primary" id="cosCloseFundBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<style id="clippingOsCleanFundingStyle">
+  #cosFundModalBackdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.78);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+  }
+  #cosFundModalBackdrop.open {
+    display: flex;
+  }
+  #cosFundModalCard {
+    width: 100%;
+    max-width: 430px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 14px;
+    padding: 20px;
+    color: #e2e8f0;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  }
+  #cosFundModalCard h3 {
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+    color: #f8fafc;
+  }
+  #cosFundModalCard p {
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    line-height: 1.5;
+  }
+  .cos-fund-target {
+    background: #090f1d;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.85rem;
+    color: #67e8f9;
+    word-break: break-all;
+    margin-bottom: 14px;
+  }
+  .cos-fund-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+  }
+  .cos-fund-btn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    background: #1e293b;
+    color: #f8fafc;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .cos-fund-btn.primary {
+    background: #0284c7;
+    border-color: #0ea5e9;
+  }
+  .cos-fund-btn.pay-link {
+    background: #16a34a;
+    border-color: #22c55e;
+    color: #ffffff;
+  }
+</style>
+
+<div id="cosFundModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="cosFundTitle">
+  <div id="cosFundModalCard">
+    <h3 id="cosFundTitle">Support Clipping OS</h3>
+    <p>Voluntary support helps fund Clipping OS development, storage, and performance improvements.</p>
+    <div class="cos-fund-target" id="cosFundHandleText">Recipient: Clipping OS</div>
+    <div class="cos-fund-actions">
+      <a class="cos-fund-btn pay-link" id="cosOpenPaymentLink" href="/support" target="_blank" rel="noopener noreferrer">Open Payment Link</a>
+      <button type="button" class="cos-fund-btn" id="cosCopyFundBtn">Copy Link</button>
+      <a class="cos-fund-btn" href="/support">Details</a>
+      <button type="button" class="cos-fund-btn primary" id="cosCloseFundBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<script id="clippingOsCleanFundingScript">
+(function () {
+  // Set your payment page URL here (no raw UPI ID or personal details):
+  const PAYMENT_URL = "https://example.com/support-clipping-os";
+  const PROJECT_LABEL = "Clipping OS";
+
+  function getActiveUrl() {
+    const clean = (PAYMENT_URL || "").trim();
+    if (clean && !clean.toLowerCase().startsWith("upi:")) {
+      return clean;
+    }
+    return "/support";
+  }
+
+  function syncFundingModal() {
+    const titleEl = document.getElementById("cosFundTitle");
+    const targetEl = document.getElementById("cosFundHandleText");
+    const payLinkEl = document.getElementById("cosOpenPaymentLink");
+    const url = getActiveUrl();
+
+    if (titleEl) titleEl.textContent = "Support " + PROJECT_LABEL;
+    if (targetEl) {
+      targetEl.textContent = "Project: " + PROJECT_LABEL + " ? " + url;
+    }
+    if (payLinkEl) {
+      payLinkEl.href = url;
+      if (url.startsWith("http://") || url.startsWith("https://")) {
+        payLinkEl.target = "_blank";
+        payLinkEl.rel = "noopener noreferrer";
+      } else {
+        payLinkEl.removeAttribute("target");
+      }
+    }
+  }
+
+  function openModal(e) {
+    if (e) e.preventDefault();
+    syncFundingModal();
+    const backdrop = document.getElementById("cosFundModalBackdrop");
+    if (backdrop) backdrop.classList.add("open");
+  }
+
+  function closeModal() {
+    const backdrop = document.getElementById("cosFundModalBackdrop");
+    if (backdrop) backdrop.classList.remove("open");
+  }
+
+  function injectFooterLink() {
+    const footer = document.getElementById("clippingOsFooter");
+    if (footer && !document.getElementById("cosOpenFundBtn")) {
+      const sep = document.createElement("span");
+      sep.style.margin = "0 8px";
+      sep.innerHTML = "&middot;";
+
+      const link = document.createElement("a");
+      link.id = "cosOpenFundBtn";
+      link.href = "/support";
+      link.textContent = "Support " + PROJECT_LABEL;
+      link.style.color = "#fde047";
+      link.style.textDecoration = "none";
+      link.style.fontWeight = "600";
+      link.addEventListener("click", openModal);
+
+      footer.appendChild(sep);
+      footer.appendChild(link);
+    }
+  }
+
+  document.addEventListener("click", function (e) {
+    if (!e.target) return;
+    if (e.target.id === "cosCloseFundBtn" || e.target.id === "cosFundModalBackdrop") {
+      closeModal();
+    } else if (e.target.id === "cosCopyFundBtn") {
+      const url = getActiveUrl();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () {
+          e.target.textContent = "Copied!";
+          setTimeout(function () { e.target.textContent = "Copy Link"; }, 1500);
+        }).catch(function () {});
+      }
+    }
+  });
+
+  window.addEventListener("DOMContentLoaded", function () {
+    syncFundingModal();
+    injectFooterLink();
+    setTimeout(function () {
+      syncFundingModal();
+      injectFooterLink();
+    }, 250);
+  });
+})();
+</script>
+<style id="clippingOsPasscodeStyle">
+  #cosPassModalBackdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.82);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+  }
+  #cosPassModalBackdrop.open {
+    display: flex;
+  }
+  #cosPassModalCard {
+    width: 100%;
+    max-width: 400px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 14px;
+    padding: 20px;
+    color: #e2e8f0;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  }
+  #cosPassModalCard h3 {
+    margin: 0 0 8px;
+    font-size: 1.12rem;
+    color: #f8fafc;
+  }
+  #cosPassModalCard p {
+    margin: 0 0 12px;
+    font-size: 0.88rem;
+    color: #cbd5e1;
+  }
+  #cosPassInput {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    background: #090f1d;
+    color: #f8fafc;
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+  }
+  .cos-pass-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  .cos-pass-btn {
+    padding: 8px 13px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    background: #1e293b;
+    color: #f8fafc;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .cos-pass-btn.primary {
+    background: #0284c7;
+    border-color: #0ea5e9;
+  }
+</style>
+
+<div id="cosPassModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="cosPassTitle">
+  <div id="cosPassModalCard">
+    <h3 id="cosPassTitle">Access Passcode Required</h3>
+    <p>Enter the Clipping OS passcode to upload media or render clips.</p>
+    <input id="cosPassInput" type="password" autocomplete="off" placeholder="Enter passcode" />
+    <div class="cos-pass-actions">
+      <button type="button" class="cos-pass-btn" id="cosPassCancelBtn">Cancel</button>
+      <button type="button" class="cos-pass-btn primary" id="cosPassSaveBtn">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<script id="clippingOsPasscodeScript">
+(function () {
+  const STORAGE_KEY = "cos_passcode_val";
+  let pendingRetry = null;
+
+  function getPasscode() {
+    try {
+      return sessionStorage.getItem(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY) || "";
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function setPasscode(val) {
+    const clean = (val || "").trim();
+    try {
+      sessionStorage.setItem(STORAGE_KEY, clean);
+      localStorage.setItem(STORAGE_KEY, clean);
+    } catch (_) {}
+    if (clean) {
+      document.cookie = "cos_passcode=" + encodeURIComponent(clean) + "; path=/; SameSite=Lax";
+    }
+  }
+
+  function openPassModal(retryFn) {
+    pendingRetry = typeof retryFn === "function" ? retryFn : null;
+    const backdrop = document.getElementById("cosPassModalBackdrop");
+    const input = document.getElementById("cosPassInput");
+    if (backdrop) backdrop.classList.add("open");
+    if (input) {
+      input.value = getPasscode();
+      setTimeout(function () { input.focus(); }, 30);
+    }
+  }
+
+  function closePassModal() {
+    const backdrop = document.getElementById("cosPassModalBackdrop");
+    if (backdrop) backdrop.classList.remove("open");
+    pendingRetry = null;
+  }
+
+  // Sync cookie on load if passcode already stored
+  const existing = getPasscode();
+  if (existing) {
+    setPasscode(existing);
+  }
+
+  // Patch window.fetch to attach X-Clipping-Passcode and prompt on 401
+  if (typeof window.fetch === "function" && !window.__cosFetchPatched) {
+    window.__cosFetchPatched = true;
+    const origFetch = window.fetch.bind(window);
+    window.fetch = async function (input, init) {
+      const opts = Object.assign({}, init || {});
+      const headers = new Headers(opts.headers || {});
+      const code = getPasscode();
+      if (code && !headers.has("X-Clipping-Passcode")) {
+        headers.set("X-Clipping-Passcode", code);
+      }
+      opts.headers = headers;
+
+      const resp = await origFetch(input, opts);
+      if (resp.status === 401) {
+        return new Promise(function (resolve) {
+          openPassModal(async function (newCode) {
+            const retryHeaders = new Headers(init && init.headers ? init.headers : {});
+            if (newCode) retryHeaders.set("X-Clipping-Passcode", newCode);
+            const retryOpts = Object.assign({}, init || {}, { headers: retryHeaders });
+            resolve(await origFetch(input, retryOpts));
+          });
+        });
+      }
+      return resp;
+    };
+  }
+
+  // Patch XMLHttpRequest for upload/render progress requests
+  if (window.XMLHttpRequest && !window.__cosXhrPatched) {
+    window.__cosXhrPatched = true;
+    const origOpen = XMLHttpRequest.prototype.open;
+    const origSend = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.open = function (method, url) {
+      this.__cosUrl = url;
+      return origOpen.apply(this, arguments);
+    };
+    XMLHttpRequest.prototype.send = function (body) {
+      const code = getPasscode();
+      if (code) {
+        try { this.setRequestHeader("X-Clipping-Passcode", code); } catch (_) {}
+      }
+      this.addEventListener("load", function () {
+        if (this.status === 401) {
+          openPassModal(function () {});
+        }
+      });
+      return origSend.apply(this, arguments);
+    };
+  }
+
+  document.addEventListener("click", function (e) {
+    if (!e.target) return;
+    if (e.target.id === "cosPassCancelBtn" || e.target.id === "cosPassModalBackdrop") {
+      closePassModal();
+    } else if (e.target.id === "cosPassSaveBtn") {
+      const input = document.getElementById("cosPassInput");
+      const val = input ? input.value.trim() : "";
+      setPasscode(val);
+      const fn = pendingRetry;
+      closePassModal();
+      if (fn) fn(val);
+    }
+  });
+
+  document.addEventListener("keydown", function (e) {
+    const backdrop = document.getElementById("cosPassModalBackdrop");
+    if (backdrop && backdrop.classList.contains("open") && e.key === "Enter") {
+      const saveBtn = document.getElementById("cosPassSaveBtn");
+      if (saveBtn) saveBtn.click();
+    }
+  });
+})();
+</script>
+<style id="clippingOsGraphicsPresetStyle">
+  #cosGraphicsBar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 8px 0;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    font-size: 0.8rem;
+    color: #e2e8f0;
+  }
+  #cosGraphicsBar label {
+    color: #94a3b8;
+    font-weight: 600;
+  }
+  #cosGraphicsSelect {
+    background: #1e293b;
+    color: #f8fafc;
+    border: 1px solid #475569;
+    border-radius: 7px;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #cosGraphicsMeta {
+    color: #38bdf8;
+    font-size: 0.75rem;
+  }
+</style>
+
+<script id="clippingOsGraphicsPresetScript">
+(function () {
+  const STORAGE_KEY = "cos_graphics_preset";
+  const PRESETS = {
+    "460":  { label: "460",  height: 460,  crf: "26", preset: "veryfast", note: "Fastest render, small file" },
+    "760":  { label: "760",  height: 760,  crf: "23", preset: "fast",     note: "Balanced speed & clarity" },
+    "1060": { label: "1060", height: 1060, crf: "21", preset: "medium",   note: "Crisp HD short quality" },
+    "2K":   { label: "2K",   height: 1440, crf: "19", preset: "medium",   note: "2K QHD sharp detail" },
+    "4K":   { label: "4K",   height: 2160, crf: "18", preset: "slow",     note: "4K Ultra HD (heavy CPU/disk)" }
+  };
+
+  function getPreset() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved && PRESETS[saved]) return saved;
+    } catch (_) {}
+    return "1060";
+  }
+
+  function setPreset(val) {
+    const clean = PRESETS[val] ? val : "1060";
+    try { localStorage.setItem(STORAGE_KEY, clean); } catch (_) {}
+    window.__cosGraphicsPreset = clean;
+    const sel = document.getElementById("cosGraphicsSelect");
+    if (sel && sel.value !== clean) sel.value = clean;
+    const meta = document.getElementById("cosGraphicsMeta");
+    if (meta) meta.textContent = PRESETS[clean].note;
+  }
+
+  function mountGraphicsBar() {
+    if (document.getElementById("cosGraphicsBar")) {
+      setPreset(getPreset());
+      return;
+    }
+    const anchor =
+      document.getElementById("cosLayoutPreviewWrap") ||
+      document.querySelector("form") ||
+      document.body;
+    if (!anchor) return;
+
+    const bar = document.createElement("div");
+    bar.id = "cosGraphicsBar";
+
+    const lbl = document.createElement("label");
+    lbl.htmlFor = "cosGraphicsSelect";
+    lbl.textContent = "Graphics:";
+
+    const sel = document.createElement("select");
+    sel.id = "cosGraphicsSelect";
+    Object.keys(PRESETS).forEach(function (k) {
+      const opt = document.createElement("option");
+      opt.value = k;
+      opt.textContent = PRESETS[k].label;
+      sel.appendChild(opt);
+    });
+
+    const meta = document.createElement("span");
+    meta.id = "cosGraphicsMeta";
+
+    sel.addEventListener("change", function () {
+      setPreset(sel.value);
+    });
+
+    bar.appendChild(lbl);
+    bar.appendChild(sel);
+    bar.appendChild(meta);
+
+    if (anchor === document.body) {
+      anchor.appendChild(bar);
+    } else {
+      anchor.insertAdjacentElement("beforebegin", bar);
+    }
+    setPreset(getPreset());
+  }
+
+  if (typeof window.fetch === "function" && !window.__cosGraphicsFetchPatched) {
+    window.__cosGraphicsFetchPatched = true;
+    const origFetch = window.fetch.bind(window);
+    window.fetch = function (input, init) {
+      const preset = getPreset();
+      const opts = Object.assign({}, init || {});
+      const headers = new Headers(opts.headers || {});
+      if (!headers.has("X-Graphics-Preset")) {
+        headers.set("X-Graphics-Preset", preset);
+      }
+      opts.headers = headers;
+
+      if (opts.body instanceof FormData && !opts.body.has("graphics_preset")) {
+        opts.body.append("graphics_preset", preset);
+      }
+      return origFetch(input, opts);
+    };
+  }
+
+  window.addEventListener("DOMContentLoaded", function () {
+    mountGraphicsBar();
+    setTimeout(mountGraphicsBar, 250);
+  });
+})();
+</script>
+<style id="clippingOsAudioQualityStyle">
+  #cosAudioBar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 8px 0;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    font-size: 0.8rem;
+    color: #e2e8f0;
+  }
+  #cosAudioBar label {
+    color: #94a3b8;
+    font-weight: 600;
+  }
+  #cosAudioSelect {
+    background: #1e293b;
+    color: #f8fafc;
+    border: 1px solid #475569;
+    border-radius: 7px;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #cosAudioMeta {
+    color: #34d399;
+    font-size: 0.75rem;
+  }
+  #cosAudioDownloadBtn {
+    background: #0284c7;
+    color: #ffffff;
+    border: 1px solid #0ea5e9;
+    border-radius: 7px;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+</style>
+
+<script id="clippingOsAudioQualityScript">
+(function () {
+  const STORAGE_KEY = "cos_audio_quality";
+  const AUDIO_PRESETS = {
+    "lossless": { label: "Lossless (FLAC)", note: "Highest quality, largest file" },
+    "320k":     { label: "320k MP3",        note: "High-bitrate MP3" },
+    "192k":     { label: "192k MP3",        note: "Balanced podcast/clip audio" },
+    "128k":     { label: "128k AAC",        note: "Compact stereo audio" },
+    "64k":      { label: "64k Voice",       note: "Lowest size for speech/slow net" }
+  };
+
+  function getAudioQuality() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved && AUDIO_PRESETS[saved]) return saved;
+    } catch (_) {}
+    return "192k";
+  }
+
+  function setAudioQuality(val) {
+    const clean = AUDIO_PRESETS[val] ? val : "192k";
+    try { localStorage.setItem(STORAGE_KEY, clean); } catch (_) {}
+    window.__cosAudioQuality = clean;
+    const sel = document.getElementById("cosAudioSelect");
+    if (sel && sel.value !== clean) sel.value = clean;
+    const meta = document.getElementById("cosAudioMeta");
+    if (meta) meta.textContent = AUDIO_PRESETS[clean].note;
+  }
+
+  async function downloadAudioOnly() {
+    const quality = getAudioQuality();
+    const meta = document.getElementById("cosAudioMeta");
+    const btn = document.getElementById("cosAudioDownloadBtn");
+
+    let sourceUrl = "";
+    const urlInput = document.querySelector('input[type="url"], input[name*="url" i], input[id*="url" i]');
+    if (urlInput && urlInput.value.trim()) {
+      sourceUrl = urlInput.value.trim();
+    }
+
+    const fileInput = document.querySelector('input[type="file"]');
+    const file = fileInput && fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+
+    if (!file && !sourceUrl) {
+      if (meta) meta.textContent = "Select a video file or enter a video URL first";
+      return;
+    }
+
+    if (btn) btn.disabled = true;
+    if (meta) meta.textContent = "Extracting " + quality + " audio...";
+
+    try {
+      let resp;
+      if (file) {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("audio_quality", quality);
+        resp = await fetch("/audio/download", {
+          method: "POST",
+          headers: { "X-Audio-Quality": quality },
+          body: fd
+        });
+      } else {
+        resp = await fetch("/audio/download", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Audio-Quality": quality
+          },
+          body: JSON.stringify({ url: sourceUrl, audio_quality: quality })
+        });
+      }
+
+      if (!resp.ok) {
+        const errText = await resp.text();
+        throw new Error(errText || ("HTTP " + resp.status));
+      }
+
+      const blob = await resp.blob();
+      const disp = resp.headers.get("Content-Disposition") || "";
+      const match = disp.match(/filename="?([^";]+)"?/i);
+      const filename = match ? match[1] : ("clipping_os_audio_" + quality + ".mp3");
+
+      const dlUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = dlUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(dlUrl); }, 2000);
+
+      if (meta) meta.textContent = "Downloaded: " + filename;
+    } catch (err) {
+      if (meta) meta.textContent = "Audio export failed: " + (err && err.message ? err.message : "check server");
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  function mountAudioBar() {
+    if (document.getElementById("cosAudioBar")) {
+      setAudioQuality(getAudioQuality());
+      return;
+    }
+    const anchor =
+      document.getElementById("cosGraphicsBar") ||
+      document.getElementById("cosLayoutPreviewWrap") ||
+      document.querySelector("form") ||
+      document.body;
+    if (!anchor) return;
+
+    const bar = document.createElement("div");
+    bar.id = "cosAudioBar";
+
+    const lbl = document.createElement("label");
+    lbl.htmlFor = "cosAudioSelect";
+    lbl.textContent = "Audio Only:";
+
+    const sel = document.createElement("select");
+    sel.id = "cosAudioSelect";
+    Object.keys(AUDIO_PRESETS).forEach(function (k) {
+      const opt = document.createElement("option");
+      opt.value = k;
+      opt.textContent = AUDIO_PRESETS[k].label;
+      sel.appendChild(opt);
+    });
+
+    const dlBtn = document.createElement("button");
+    dlBtn.type = "button";
+    dlBtn.id = "cosAudioDownloadBtn";
+    dlBtn.textContent = "Download Audio";
+
+    const meta = document.createElement("span");
+    meta.id = "cosAudioMeta";
+
+    sel.addEventListener("change", function () {
+      setAudioQuality(sel.value);
+    });
+    dlBtn.addEventListener("click", downloadAudioOnly);
+
+    bar.appendChild(lbl);
+    bar.appendChild(sel);
+    bar.appendChild(dlBtn);
+    bar.appendChild(meta);
+
+    if (anchor === document.body) {
+      anchor.appendChild(bar);
+    } else {
+      anchor.insertAdjacentElement("afterend", bar);
+    }
+    setAudioQuality(getAudioQuality());
+  }
+
+  if (typeof window.fetch === "function" && !window.__cosAudioFetchPatched) {
+    window.__cosAudioFetchPatched = true;
+    const origFetch = window.fetch.bind(window);
+    window.fetch = function (input, init) {
+      const q = getAudioQuality();
+      const opts = Object.assign({}, init || {});
+      const headers = new Headers(opts.headers || {});
+      if (!headers.has("X-Audio-Quality")) {
+        headers.set("X-Audio-Quality", q);
+      }
+      opts.headers = headers;
+      if (opts.body instanceof FormData && !opts.body.has("audio_quality")) {
+        opts.body.append("audio_quality", q);
+      }
+      return origFetch(input, opts);
+    };
+  }
+
+  window.addEventListener("DOMContentLoaded", function () {
+    mountAudioBar();
+    setTimeout(mountAudioBar, 250);
+  });
+})();
+</script>
+<style id="clippingOsLeftThumbStyle">
+  #cosLeftThumbWrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin: 12px 0;
+    flex-wrap: wrap;
+  }
+  #cosThumbSpace {
+    width: 320px;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+    border: 1px dashed #475569;
+    background: #0b1120;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  #cosThumbSpace img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  #cosThumbPlaceholder {
+    color: #94a3b8;
+    font-size: 0.78rem;
+    text-align: center;
+    padding: 10px;
+  }
+</style>
+
+<script id="clippingOsLeftThumbScript">
+(function () {
+  function mountLeftThumb() {
+    if (document.getElementById("cosLeftThumbWrap")) return;
+    const target =
+      document.getElementById("cosGraphicsBar") ||
+      document.getElementById("cosLayoutPreviewWrap") ||
+      document.querySelector("form") ||
+      document.body;
+    if (!target) return;
+
+    const wrap = document.createElement("div");
+    wrap.id = "cosLeftThumbWrap";
+
+    const slot = document.createElement("div");
+    slot.id = "cosThumbSpace";
+    slot.setAttribute("data-thumbnail-slot", "left");
+
+    const img = document.createElement("img");
+    img.id = "cosThumbImg";
+    img.src = "/assets/thumbnailll.png";
+    img.alt = "Clipping OS Thumbnail";
+
+    const ph = document.createElement("div");
+    ph.id = "cosThumbPlaceholder";
+    ph.textContent = "Thumbnail space (frontend/assets/thumbnailll.png)";
+    ph.style.display = "none";
+
+    img.onerror = function () {
+      img.style.display = "none";
+      ph.style.display = "block";
+    };
+
+    slot.appendChild(img);
+    slot.appendChild(ph);
+    wrap.appendChild(slot);
+
+    if (target === document.body) {
+      target.prepend(wrap);
+    } else {
+      target.insertAdjacentElement("beforebegin", wrap);
+      wrap.appendChild(target);
+    }
+  }
+
+  window.addEventListener("DOMContentLoaded", function () {
+    mountLeftThumb();
+    setTimeout(mountLeftThumb, 250);
+  });
+})();
+</script>
+<style id="clippingOsCardQualityStyle">
+  #cosQualityGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .cos-q-box {
+    background: rgba(15, 23, 42, 0.72);
+    border: 1px solid rgba(99, 102, 241, 0.28);
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+  .cos-q-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cos-q-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .cos-q-btn {
+    background: #1e293b;
+    color: #e2e8f0;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .cos-q-btn.active {
+    background: #4f46e5;
+    border-color: #818cf8;
+    color: #ffffff;
+  }
+  .cos-q-sub {
+    margin-top: 6px;
+    font-size: 0.72rem;
+    color: #38bdf8;
+  }
+  #cosCardAudioDlBtn {
+    background: #0ea5e9;
+    color: #ffffff;
+    border: none;
+    border-radius: 7px;
+    padding: 3px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+</style>
+
+<script id="clippingOsCardQualityScript">
+(function () {
+  const G_KEY = "cos_graphics_preset";
+  const A_KEY = "cos_audio_quality";
+
+  const G_LIST = [
+    { id: "460",  label: "460",  info: "Fastest render & light size" },
+    { id: "760",  label: "760",  info: "Fast & clear mobile export" },
+    { id: "1060", label: "1060", info: "Crisp HD short quality" },
+    { id: "2K",   label: "2K",   info: "1440p sharp detail (heavier)" },
+    { id: "4K",   label: "4K",   info: "2160p Ultra HD (max CPU/disk)" }
+  ];
+
+  const A_LIST = [
+    { id: "lossless", label: "Lossless", info: "FLAC highest quality" },
+    { id: "320k",     label: "320k",     info: "High-bitrate MP3" },
+    { id: "192k",     label: "192k",     info: "Balanced MP3 audio" },
+    { id: "128k",     label: "128k",     info: "Compact AAC audio" },
+    { id: "64k",      label: "64k",      info: "Smallest voice size" }
+  ];
+
+  function getG() {
+    try { const v = localStorage.getItem(G_KEY); if (v) return v; } catch (_) {}
+    return "1060";
+  }
+  function getA() {
+    try { const v = localStorage.getItem(A_KEY); if (v) return v; } catch (_) {}
+    return "192k";
+  }
+
+  function syncUI() {
+    const gVal = getG();
+    const aVal = getA();
+    window.__cosGraphicsPreset = gVal;
+    window.__cosAudioQuality = aVal;
+
+    document.querySelectorAll("[data-cos-g]").forEach(function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-cos-g") === gVal);
+    });
+    document.querySelectorAll("[data-cos-a]").forEach(function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-cos-a") === aVal);
+    });
+
+    const gObj = G_LIST.find(function (x) { return x.id === gVal; }) || G_LIST[2];
+    const aObj = A_LIST.find(function (x) { return x.id === aVal; }) || A_LIST[2];
+
+    const gSub = document.getElementById("cosCardGInfo");
+    const aSub = document.getElementById("cosCardAInfo");
+    if (gSub) gSub.textContent = gObj.label + " ? " + gObj.info;
+    if (aSub) aSub.textContent = aObj.label + " ? " + aObj.info;
+  }
+
+  function findMainCardAnchor() {
+    const buttons = Array.from(document.querySelectorAll("button"));
+    const genBtn = buttons.find(function (b) {
+      return /generate viral clips/i.test((b.textContent || "").trim());
+    });
+    if (genBtn && genBtn.parentElement) {
+      const parent = genBtn.parentElement;
+      const capcutRow = Array.from(parent.children).find(function (el) {
+        return /capcut pro shorts auto-handoff/i.test(el.textContent || "");
+      });
+      return { container: parent, beforeEl: capcutRow || genBtn };
+    }
+    return null;
+  }
+
+  function mountInsideCard() {
+    if (document.getElementById("cosQualityGrid")) {
+      syncUI();
+      return;
+    }
+    const anchor = findMainCardAnchor();
+    if (!anchor) return;
+
+    const grid = document.createElement("div");
+    grid.id = "cosQualityGrid";
+
+    const gBox = document.createElement("div");
+    gBox.className = "cos-q-box";
+    const gTitle = document.createElement("div");
+    gTitle.className = "cos-q-title";
+    gTitle.innerHTML = "<span>GRAPHICS QUALITY</span>";
+    const gPills = document.createElement("div");
+    gPills.className = "cos-q-pills";
+    G_LIST.forEach(function (item) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "cos-q-btn";
+      b.textContent = item.label;
+      b.setAttribute("data-cos-g", item.id);
+      b.addEventListener("click", function () {
+        try { localStorage.setItem(G_KEY, item.id); } catch (_) {}
+        syncUI();
+      });
+      gPills.appendChild(b);
+    });
+    const gSub = document.createElement("div");
+    gSub.id = "cosCardGInfo";
+    gSub.className = "cos-q-sub";
+    gBox.appendChild(gTitle);
+    gBox.appendChild(gPills);
+    gBox.appendChild(gSub);
+
+    const aBox = document.createElement("div");
+    aBox.className = "cos-q-box";
+    const aTitle = document.createElement("div");
+    aTitle.className = "cos-q-title";
+    const aTitleSpan = document.createElement("span");
+    aTitleSpan.textContent = "AUDIO QUALITY";
+    const aDlBtn = document.createElement("button");
+    aDlBtn.type = "button";
+    aDlBtn.id = "cosCardAudioDlBtn";
+    aDlBtn.textContent = "Audio Only";
+    aDlBtn.addEventListener("click", function () {
+      const legacyBtn = document.getElementById("cosAudioDownloadBtn");
+      if (legacyBtn) legacyBtn.click();
+    });
+    aTitle.appendChild(aTitleSpan);
+    aTitle.appendChild(aDlBtn);
+
+    const aPills = document.createElement("div");
+    aPills.className = "cos-q-pills";
+    A_LIST.forEach(function (item) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "cos-q-btn";
+      b.textContent = item.label;
+      b.setAttribute("data-cos-a", item.id);
+      b.addEventListener("click", function () {
+        try { localStorage.setItem(A_KEY, item.id); } catch (_) {}
+        syncUI();
+      });
+      aPills.appendChild(b);
+    });
+    const aSub = document.createElement("div");
+    aSub.id = "cosCardAInfo";
+    aSub.className = "cos-q-sub";
+    aBox.appendChild(aTitle);
+    aBox.appendChild(aPills);
+    aBox.appendChild(aSub);
+
+    grid.appendChild(gBox);
+    grid.appendChild(aBox);
+
+    anchor.container.insertBefore(grid, anchor.beforeEl);
+    syncUI();
+  }
+
+  const obs = new MutationObserver(function () {
+    if (!document.getElementById("cosQualityGrid")) {
+      mountInsideCard();
+    }
+  });
+
+  window.addEventListener("DOMContentLoaded", function () {
+    mountInsideCard();
+    obs.observe(document.body, { childList: true, subtree: true });
+    setTimeout(mountInsideCard, 400);
+  });
+})();
+</script>
+<script id="clippingOsViralPreviewScript">
+(function () {
+  function ensureViralHelperBox() {
+    if (document.getElementById("cosViralTipBar")) return;
+    const grid = document.getElementById("cosQualityGrid");
+    if (!grid || !grid.parentElement) return;
+
+    const bar = document.createElement("div");
+    bar.id = "cosViralTipBar";
+    bar.style.cssText = [
+      "margin: 6px 0 12px 0",
+      "padding: 8px 12px",
+      "border-radius: 10px",
+      "background: rgba(14, 165, 233, 0.10)",
+      "border: 1px solid rgba(56, 189, 248, 0.28)",
+      "color: #cbd5e1",
+      "font-size: 0.76rem",
+      "display: flex",
+      "justify-content: space-between",
+      "align-items: center",
+      "gap: 10px",
+      "flex-wrap: wrap"
+    ].join(";");
+
+    bar.innerHTML =
+      "<span><b>Turbo Stack Active:</b> 9:16 Smart Framing + -14 LUFS Audio + Auto Viral Titles & Hashtags ready.</span>" +
+      "<span style='color:#38bdf8;font-weight:600;'>Fast Render Mode</span>";
+
+    grid.parentElement.insertBefore(bar, grid.nextSibling);
+  }
+
+  window.addEventListener("DOMContentLoaded", function () {
+    ensureViralHelperBox();
+    setTimeout(ensureViralHelperBox, 500);
+  });
+})();
+</script>
+
+<!-- AI Clipping OS: Dead-Air, Voice Cleanup, Auto-Series & A/B Testing Controls -->
+<section id="cos-pro-controls" style="margin-top:16px;padding:14px;border:1px solid #2a3142;border-radius:10px;background:#111622;color:#e6edf7;font-family:system-ui,sans-serif;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <strong>Studio Enhancements</strong>
+    <span style="font-size:12px;opacity:0.75;">Pacing, Audio, Series &amp; A/B Variants</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
+    <!-- 1. Dead-Air Remover -->
+    <div style="padding:10px;border:1px solid #232a3b;border-radius:8px;background:#0c101a;">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;">
+        <input id="cos-dead-air-enabled" type="checkbox" checked />
+        Dead-Air Remover
+      </label>
+      <div style="margin-top:8px;font-size:12px;opacity:0.85;">
+        Min silence (s): <input id="cos-min-silence" type="number" step="0.1" min="0.2" max="5.0" value="0.8" style="width:64px;margin-left:4px;background:#161d2e;color:#fff;border:1px solid #303a52;border-radius:4px;padding:2px 6px;" />
+      </div>
+      <div style="margin-top:6px;font-size:12px;opacity:0.85;">
+        Keep pause (s): <input id="cos-keep-pause" type="number" step="0.05" min="0.0" max="1.5" value="0.25" style="width:64px;margin-left:10px;background:#161d2e;color:#fff;border:1px solid #303a52;border-radius:4px;padding:2px 6px;" />
+      </div>
+    </div>
+
+    <!-- 2. AI Voice Cleanup -->
+    <div style="padding:10px;border:1px solid #232a3b;border-radius:8px;background:#0c101a;">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;">
+        <input id="cos-voice-cleanup-enabled" type="checkbox" checked />
+        AI Voice Cleanup
+      </label>
+      <div style="margin-top:8px;font-size:12px;opacity:0.85;">
+        Denoise:
+        <select id="cos-denoise-strength" style="margin-left:6px;background:#161d2e;color:#fff;border:1px solid #303a52;border-radius:4px;padding:2px 6px;">
+          <option value="light">Light</option>
+          <option value="medium" selected>Medium</option>
+          <option value="strong">Strong</option>
+        </select>
+      </div>
+      <div style="margin-top:6px;font-size:12px;opacity:0.85;">
+        Clarity boost (dB): <input id="cos-clarity-db" type="number" step="0.5" min="0" max="8" value="3.0" style="width:64px;margin-left:4px;background:#161d2e;color:#fff;border:1px solid #303a52;border-radius:4px;padding:2px 6px;" />
+      </div>
+    </div>
+
+    <!-- 3. Auto-Series Creator -->
+    <div style="padding:10px;border:1px solid #232a3b;border-radius:8px;background:#0c101a;">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;">
+        <input id="cos-auto-series-enabled" type="checkbox" />
+        Auto-Series (Part 1, Part 2...)
+      </label>
+      <div style="margin-top:8px;font-size:12px;opacity:0.85;">
+        <input id="cos-series-title" type="text" placeholder="Series title (e.g. Boss Guide)" style="width:100%;box-sizing:border-box;background:#161d2e;color:#fff;border:1px solid #303a52;border-radius:4px;padding:4px 8px;" />
+      </div>
+    </div>
+
+    <!-- 4. Viral A/B Testing Studio -->
+    <div style="padding:10px;border:1px solid #232a3b;border-radius:8px;background:#0c101a;">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;">
+        <input id="cos-ab-testing-enabled" type="checkbox" />
+        A/B Testing Studio
+      </label>
+      <div style="margin-top:8px;font-size:12px;opacity:0.85;">
+        Variants:
+        <select id="cos-ab-variants" style="margin-left:6px;background:#161d2e;color:#fff;border:1px solid #303a52;border-radius:4px;padding:2px 6px;">
+          <option value="2">2 Variants (A / B)</option>
+          <option value="3" selected>3 Variants (A / B / C)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Studio Enhancements: Dead-Air Remover, AI Voice Cleanup, Auto-Series & A/B Testing Studio -->
+<section id="cos-studio-enhancements" style="margin:14px 0;padding:14px 16px;border:1px solid rgba(148,163,184,0.22);border-radius:12px;background:rgba(15,23,42,0.72);color:#f1f5f9;">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <div style="font-weight:700;font-size:14px;letter-spacing:0.2px;">Studio Enhancements</div>
+    <div style="font-size:12px;color:#94a3b8;">Dead-Air &bull; Voice Cleanup &bull; Auto-Series &bull; A/B Variants</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;">
+    <div style="padding:10px 12px;border:1px solid rgba(148,163,184,0.16);border-radius:10px;background:rgba(2,6,23,0.55);">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;cursor:pointer;">
+        <input id="cos-dead-air-enabled" type="checkbox" checked />
+        Dead-Air Remover
+      </label>
+      <div style="margin-top:8px;font-size:12px;color:#cbd5e1;display:flex;justify-content:space-between;align-items:center;">
+        <span>Min silence (s)</span>
+        <input id="cos-min-silence" type="number" step="0.1" min="0.2" max="5.0" value="0.8" style="width:68px;background:#0f172a;color:#f8fafc;border:1px solid #334155;border-radius:6px;padding:3px 6px;" />
+      </div>
+      <div style="margin-top:6px;font-size:12px;color:#cbd5e1;display:flex;justify-content:space-between;align-items:center;">
+        <span>Keep pause (s)</span>
+        <input id="cos-keep-pause" type="number" step="0.05" min="0.0" max="1.5" value="0.25" style="width:68px;background:#0f172a;color:#f8fafc;border:1px solid #334155;border-radius:6px;padding:3px 6px;" />
+      </div>
+    </div>
+
+    <div style="padding:10px 12px;border:1px solid rgba(148,163,184,0.16);border-radius:10px;background:rgba(2,6,23,0.55);">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;cursor:pointer;">
+        <input id="cos-voice-cleanup-enabled" type="checkbox" checked />
+        AI Voice Cleanup
+      </label>
+      <div style="margin-top:8px;font-size:12px;color:#cbd5e1;display:flex;justify-content:space-between;align-items:center;">
+        <span>Denoise</span>
+        <select id="cos-denoise-strength" style="background:#0f172a;color:#f8fafc;border:1px solid #334155;border-radius:6px;padding:3px 6px;">
+          <option value="light">Light</option>
+          <option value="medium" selected>Medium</option>
+          <option value="strong">Strong</option>
+        </select>
+      </div>
+      <div style="margin-top:6px;font-size:12px;color:#cbd5e1;display:flex;justify-content:space-between;align-items:center;">
+        <span>Clarity (dB)</span>
+        <input id="cos-clarity-db" type="number" step="0.5" min="0" max="8" value="3.0" style="width:68px;background:#0f172a;color:#f8fafc;border:1px solid #334155;border-radius:6px;padding:3px 6px;" />
+      </div>
+    </div>
+
+    <div style="padding:10px 12px;border:1px solid rgba(148,163,184,0.16);border-radius:10px;background:rgba(2,6,23,0.55);">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;cursor:pointer;">
+        <input id="cos-auto-series-enabled" type="checkbox" />
+        Auto-Series Creator
+      </label>
+      <div style="margin-top:8px;font-size:12px;color:#cbd5e1;">
+        <input id="cos-series-title" type="text" placeholder="Series title (e.g. Boss Guide)" style="width:100%;box-sizing:border-box;background:#0f172a;color:#f8fafc;border:1px solid #334155;border-radius:6px;padding:5px 8px;" />
+      </div>
+    </div>
+
+    <div style="padding:10px 12px;border:1px solid rgba(148,163,184,0.16);border-radius:10px;background:rgba(2,6,23,0.55);">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;cursor:pointer;">
+        <input id="cos-ab-testing-enabled" type="checkbox" />
+        A/B Testing Studio
+      </label>
+      <div style="margin-top:8px;font-size:12px;color:#cbd5e1;display:flex;justify-content:space-between;align-items:center;">
+        <span>Variants</span>
+        <select id="cos-ab-variants" style="background:#0f172a;color:#f8fafc;border:1px solid #334155;border-radius:6px;padding:3px 6px;">
+          <option value="2">2 (A / B)</option>
+          <option value="3" selected>3 (A / B / C)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+window.getStudioEnhancementsConfig = function () {
+  const val = (id, fallback) => {
+    const el = document.getElementById(id);
+    return el ? el.value : fallback;
+  };
+  const checked = (id, fallback = false) => {
+    const el = document.getElementById(id);
+    return el ? Boolean(el.checked) : fallback;
+  };
+  return {
+    dead_air_remover: {
+      enabled: checked("cos-dead-air-enabled", true),
+      min_silence_sec: parseFloat(val("cos-min-silence", "0.8")) || 0.8,
+      keep_pause_sec: parseFloat(val("cos-keep-pause", "0.25")) || 0.25,
+    },
+    voice_cleanup: {
+      enabled: checked("cos-voice-cleanup-enabled", true),
+      denoise_strength: val("cos-denoise-strength", "medium"),
+      clarity_boost_db: parseFloat(val("cos-clarity-db", "3.0")) || 3.0,
+    },
+    auto_series: {
+      enabled: checked("cos-auto-series-enabled", false),
+      series_title: (val("cos-series-title", "") || "").trim(),
+    },
+    ab_testing: {
+      enabled: checked("cos-ab-testing-enabled", false),
+      num_variants: parseInt(val("cos-ab-variants", "3"), 10) || 3,
+    },
+  };
+};
+</script>
+
+
+
+<script id="cos-strict-single-page-js">
+(function () {
+  window.cosOpenPage = function (page) {
+    var landing = document.getElementById("cosLandingView");
+    var workspace = document.getElementById("cosWorkspaceView");
+    var btnL = document.getElementById("cosTabLanding");
+    var btnW = document.getElementById("cosTabWorkspace");
+
+    if (page === "landing") {
+      if (landing) landing.classList.remove("cos-hidden");
+      if (workspace) workspace.classList.add("cos-hidden");
+      if (btnL) btnL.classList.add("active");
+      if (btnW) btnW.classList.remove("active");
+      window.scrollTo({ top: 0, behavior: "instant" });
+      return;
+    }
+
+    if (landing) landing.classList.add("cos-hidden");
+    if (workspace) workspace.classList.remove("cos-hidden");
+    if (btnW) btnW.classList.add("active");
+    if (btnL) btnL.classList.remove("active");
+
+    if (typeof window.cosOpenSection === "function") {
+      var map = {
+        studio: "new-project",
+        clips: "gallery",
+        settings: "settings",
+        overview: "overview"
+      };
+      window.cosOpenSection(map[page] || "overview");
+    }
+    window.scrollTo({ top: 0, behavior: "instant" });
+  };
+})();
+</script>
+
+
+<script id="cos-url-page-sync">
+document.addEventListener("DOMContentLoaded", function () {
+  var path = (window.location.pathname || "/").toLowerCase();
+  var pageMap = {
+    "/landing": "landing",
+    "/studio": "studio",
+    "/clips": "clips"
+  };
+  var target = pageMap[path];
+  if (target && typeof window.cosOpenPage === "function") {
+    window.cosOpenPage(target);
+  }
+});
+</script>
+
+<style id="cos-professional-redesign">
+
+/* =========================================
+   AI CLIPPING OS — PROFESSIONAL DESIGN
+   Visual overrides only. Existing functions
+   and application behavior remain untouched.
+========================================= */
+
+:root {
+  --bg-canvas: #090a10;
+  --bg-card: #11131d;
+  --bg-card-alt: #181b29;
+  --line-subtle: rgba(255,255,255,.085);
+  --accent-purple: #8b5cf6;
+  --accent-purple-lt: #a78bfa;
+  --accent-blue: #6366f1;
+  --accent-cyan: #22d3ee;
+  --ink-main: #f5f5fa;
+  --ink-muted: #9ba3b8;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--bg-canvas);
+}
+
+body {
+  background:
+    radial-gradient(ellipse at 85% 0%, rgba(99,102,241,.10), transparent 38%),
+    radial-gradient(ellipse at 0% 50%, rgba(139,92,246,.055), transparent 35%),
+    var(--bg-canvas) !important;
+  color: var(--ink-main);
+  letter-spacing: .01em;
+}
+
+/* Master dashboard shell */
+
+.cos-shell {
+  max-width: 1480px;
+  margin: 22px auto 40px;
+  padding: 0 22px;
+}
+
+.cos-top-tabs {
+  background: rgba(17,19,29,.88);
+  border: 1px solid var(--line-subtle);
+  border-radius: 16px;
+  padding: 14px 18px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.16);
+  backdrop-filter: blur(16px);
+}
+
+.cos-tab-btn {
+  border-radius: 10px;
+  padding: 10px 16px;
+  transition: .2s ease;
+}
+
+.cos-tab-btn.active {
+  background: linear-gradient(120deg,#7c3aed,#4f46e5);
+  box-shadow: 0 5px 18px rgba(99,102,241,.22);
+}
+
+/* Panels and cards */
+
+.cos-panel,
+.cos-sidebar,
+.cos-mini-card {
+  background: linear-gradient(145deg,rgba(20,22,34,.98),rgba(15,17,27,.98));
+  border: 1px solid var(--line-subtle);
+  border-radius: 16px;
+  box-shadow: 0 12px 35px rgba(0,0,0,.16);
+}
+
+.cos-panel {
+  padding: 22px;
+}
+
+.cos-mini-card {
+  background: rgba(27,30,45,.76);
+  border-radius: 13px;
+  padding: 17px;
+  transition: border-color .2s ease, transform .2s ease;
+}
+
+.cos-mini-card:hover {
+  border-color: rgba(139,92,246,.38);
+  transform: translateY(-2px);
+}
+
+.cos-panel h1,
+.cos-panel h2,
+.cos-panel h3 {
+  letter-spacing: -.025em;
+}
+
+.cos-panel h2 {
+  font-size: 20px;
+}
+
+.cos-muted {
+  color: #9ba3b8;
+  line-height: 1.65;
+}
+
+/* Sidebar */
+
+.cos-sidebar {
+  padding: 16px;
+  position: sticky;
+  top: 18px;
+}
+
+.cos-nav-item {
+  padding: 11px 12px;
+  border-radius: 10px;
+  margin-bottom: 5px;
+  font-size: 13px;
+  transition: background .18s ease, border-color .18s ease;
+}
+
+.cos-nav-item:hover {
+  background: rgba(139,92,246,.09);
+  border-color: rgba(139,92,246,.15);
+}
+
+.cos-nav-item.active {
+  background: linear-gradient(110deg,rgba(124,58,237,.24),rgba(79,70,229,.13));
+  border-color: rgba(139,92,246,.38);
+  color: #fff;
+  box-shadow: inset 3px 0 0 #9b78ff;
+}
+
+/* Buttons */
+
+.cos-btn-grad {
+  background: linear-gradient(115deg,#7c3aed,#4f46e5);
+  border-radius: 10px;
+  padding: 11px 17px;
+  box-shadow: 0 5px 16px rgba(99,102,241,.18);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.cos-btn-grad:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(99,102,241,.28);
+}
+
+.cos-btn-ghost {
+  border-radius: 10px;
+  transition: background .18s ease, border-color .18s ease;
+}
+
+.cos-btn-ghost:hover {
+  background: rgba(139,92,246,.12);
+  border-color: rgba(139,92,246,.35);
+}
+
+/* Original clipping studio header */
+
+body > header {
+  background: rgba(13,15,24,.94);
+  border-bottom: 1px solid var(--line-subtle);
+  padding: 17px 28px;
+  backdrop-filter: blur(18px);
+}
+
+body > header .brand h1 {
+  letter-spacing: -.035em;
+  font-size: 21px;
+}
+
+body > header .user-pill {
+  background: rgba(124,58,237,.15);
+  border-color: rgba(139,92,246,.35);
+  color: #c4b5fd;
+}
+
+/* Original project workspace */
+
+body > main {
+  max-width: 1480px;
+  grid-template-columns: 300px minmax(0,1fr);
+  gap: 20px;
+  margin: 28px auto;
+}
+
+body > main .card {
+  background: linear-gradient(145deg,#141725,#10121c);
+  border: 1px solid var(--line-subtle);
+  border-radius: 16px;
+  box-shadow: 0 12px 35px rgba(0,0,0,.20);
+}
+
+.proj-item {
+  border-radius: 12px;
+  transition: .18s ease;
+}
+
+.proj-item:hover,
+.proj-item.active {
+  border-color: rgba(139,92,246,.55);
+  background: rgba(124,58,237,.13);
+}
+
+/* Shared controls */
+
+input,
+select,
+textarea {
+  background-color: #0e111b !important;
+  color: #f5f5fa !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  border-radius: 10px !important;
+  outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 0 0 3px rgba(139,92,246,.12);
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 3px;
+}
+
+/* Responsive refinements */
+
+@media (max-width: 900px) {
+  .cos-shell {
+    padding: 0 14px;
+  }
+
+  body > main {
+    grid-template-columns: 1fr;
+    padding: 0 14px;
+    margin: 18px auto;
+  }
+
+  .cos-sidebar {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .cos-shell {
+    padding: 0 8px;
+    margin-top: 12px;
+  }
+
+  .cos-panel {
+    padding: 16px;
+  }
+
+  body > header {
+    padding: 13px 14px;
+    gap: 10px;
+  }
+
+  body > header .brand h1 {
+    font-size: 17px;
+  }
+
+  body > main {
+    padding: 0 8px;
+    gap: 14px;
+  }
+
+  .cos-mini-card {
+    padding: 14px;
+  }
+}
+
+</style>
+
+<style id="cos-final-ui-polish">
+/* AI CLIPPING OS — unified visual polish; no application logic changed */
+:root {
+  --cos-surface: #111522;
+  --cos-surface-raised: #171c2b;
+  --cos-stroke: rgba(163, 174, 202, .14);
+  --cos-glow: rgba(124, 92, 255, .22);
+}
+html { color-scheme: dark; }
+body {
+  background:
+    radial-gradient(900px 500px at 12% -10%, rgba(94, 70, 190, .18), transparent 65%),
+    radial-gradient(800px 460px at 100% 12%, rgba(28, 126, 170, .10), transparent 65%),
+    #090b12 !important;
+}
+.cos-shell {
+  width: min(1500px, 100%);
+  margin: 24px auto 34px !important;
+  padding: 0 clamp(12px, 2.2vw, 30px) !important;
+}
+.cos-top-tabs {
+  min-height: 66px;
+  background: rgba(17, 21, 34, .92) !important;
+  border: 1px solid var(--cos-stroke) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 14px 42px rgba(0,0,0,.22);
+}
+.cos-top-tabs > div:first-child strong {
+  font-size: 16px;
+  letter-spacing: -.035em;
+}
+.cos-tab-btn, .cos-btn-grad, .cos-btn-ghost,
+.cos-nav-item, .primary-btn, .tab-btn, .preset-chip, .seg-btn {
+  transition: background .18s ease, border-color .18s ease,
+              box-shadow .18s ease, transform .18s ease, color .18s ease;
+}
+.cos-tab-btn.active, .cos-btn-grad, .primary-btn {
+  background: linear-gradient(115deg, #7952e8, #4d62dc) !important;
+}
+.cos-btn-grad, .cos-btn-ghost { min-height: 38px; }
+.cos-panel, .cos-sidebar, .cos-mini-card {
+  border-color: var(--cos-stroke) !important;
+  box-shadow: 0 12px 34px rgba(0,0,0,.20) !important;
+}
+.cos-panel {
+  background: linear-gradient(145deg, rgba(19,23,37,.98), rgba(14,17,28,.98)) !important;
+  border-radius: 16px !important;
+}
+.cos-mini-card {
+  background: linear-gradient(145deg, #1a2031, #151a28) !important;
+  border-radius: 13px !important;
+}
+.cos-dash-layout {
+  grid-template-columns: 252px minmax(0, 1fr) !important;
+  gap: 18px !important;
+}
+.cos-sidebar {
+  background: rgba(17,21,34,.96) !important;
+}
+.cos-nav-item { min-height: 40px; }
+.cos-nav-item.active {
+  background: linear-gradient(100deg, rgba(124,92,255,.24), rgba(77,98,220,.12)) !important;
+  box-shadow: inset 3px 0 #9b82ff;
+}
+.cos-hero-grid { gap: 18px !important; }
+.cos-panel h1 { letter-spacing: -.045em !important; }
+.cos-panel h2 { letter-spacing: -.035em !important; }
+.cos-muted { color: #a1abc0 !important; }
+
+/* The original clipping engine remains the working editor below the dashboard. */
+body > header {
+  width: min(1440px, calc(100% - 48px));
+  margin: 8px auto 0;
+  border: 1px solid var(--cos-stroke) !important;
+  border-radius: 15px 15px 0 0;
+  background: rgba(17,21,34,.96) !important;
+}
+body > main {
+  width: min(1440px, calc(100% - 48px));
+  max-width: none !important;
+  margin: 0 auto 28px !important;
+  padding: 22px !important;
+  grid-template-columns: minmax(235px, 285px) minmax(0, 1fr) !important;
+  gap: 18px !important;
+  background: rgba(15,19,30,.78);
+  border: 1px solid var(--cos-stroke);
+  border-top: 0;
+  border-radius: 0 0 16px 16px;
+}
+body > main .card {
+  background: linear-gradient(145deg, #171c2b, #111522) !important;
+  border: 1px solid var(--cos-stroke) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.18) !important;
+}
+body > main .card h2 { font-size: 16px; }
+.project-list { scrollbar-width: thin; scrollbar-color: #454064 transparent; }
+.proj-item { padding: 13px !important; }
+.tabs {
+  background: #0c101a !important;
+  border-color: var(--cos-stroke) !important;
+}
+.tab-btn.active {
+  background: linear-gradient(115deg, #7952e8, #4d62dc) !important;
+}
+.dropzone {
+  border-color: rgba(139, 112, 255, .48) !important;
+  background: rgba(124,92,255,.055) !important;
+  border-radius: 14px !important;
+}
+.dropzone:hover { background: rgba(124,92,255,.12) !important; }
+input[type="text"], input[type="url"], input[type="number"],
+input[type="password"], select, textarea {
+  background: #0c101a !important;
+  border: 1px solid var(--cos-stroke) !important;
+  min-height: 42px;
+}
+.opt-box {
+  background: #121827 !important;
+  border-color: var(--cos-stroke) !important;
+  border-radius: 12px !important;
+}
+.seg-btn { min-height: 36px; }
+.seg-btn.active {
+  background: linear-gradient(115deg, #7952e8, #256eaa) !important;
+  box-shadow: 0 4px 14px var(--cos-glow) !important;
+}
+.primary-btn {
+  min-height: 46px;
+  border-radius: 11px !important;
+  box-shadow: 0 8px 22px rgba(91,82,220,.22);
+}
+.primary-btn:hover, .cos-btn-grad:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+.progress-wrap, .activity-log {
+  border-color: var(--cos-stroke) !important;
+  border-radius: 12px !important;
+}
+.clip-card {
+  background: #171c2b !important;
+  border: 1px solid var(--cos-stroke) !important;
+  border-radius: 13px !important;
+}
+footer { color: #8f99ae; }
+
+/* Phone and small tablet layout */
+@media (max-width: 900px) {
+  .cos-dash-layout { grid-template-columns: minmax(0,1fr) !important; }
+  body > main {
+    grid-template-columns: minmax(0,1fr) !important;
+    width: calc(100% - 28px) !important;
+    padding: 14px !important;
+  }
+  body > header { width: calc(100% - 28px) !important; }
+}
+@media (max-width: 640px) {
+  .cos-shell { margin: 12px auto 22px !important; padding: 0 10px !important; }
+  .cos-top-tabs { padding: 12px !important; }
+  .cos-tab-group { width: 100%; }
+  .cos-tab-btn { flex: 1; }
+  .cos-panel { padding: 15px !important; }
+  body > header {
+    width: calc(100% - 20px) !important;
+    margin-top: 4px;
+    border-radius: 13px 13px 0 0;
+  }
+  body > main {
+    width: calc(100% - 20px) !important;
+    padding: 10px !important;
+    gap: 12px !important;
+  }
+  .stepper { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+  .clips-grid { grid-template-columns: repeat(auto-fill, minmax(155px,1fr)) !important; gap: 10px !important; }
+}
+</style>
+
+</body>
+</html>

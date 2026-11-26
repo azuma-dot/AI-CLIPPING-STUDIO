@@ -1,0 +1,7 @@
+{
+  "ollama_model": "qwen3.5:4b",
+  "whisper_model": "base",
+  "max_clips": 3,
+  "allow_registration": true,
+  "allow_url_download": true
+}
