@@ -17248,6 +17248,27 @@ app = FastAPI(title="AI Clipping OS", version="1.3.0")
 
 app.mount("/media/outputs", StaticFiles(directory=str(OUTPUTS_DIR)), name="outputs")
 (FRONTEND_DIR / "assets").mkdir(parents=True, exist_ok=True)
+from fastapi.responses import Response as _SeoResponse
+
+@app.get("/robots.txt", include_in_schema=False)
+def _robots_txt():
+    return _SeoResponse(
+        content="User-agent: *\nAllow: /\nSitemap: https://ai-clipping-studio.onrender.com/sitemap.xml\n",
+        media_type="text/plain",
+    )
+
+@app.get("/sitemap.xml", include_in_schema=False)
+def _sitemap_xml():
+    xml = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://ai-clipping-studio.onrender.com/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>"""
+    return _SeoResponse(content=xml, media_type="application/xml")
+
 app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIR / "assets")), name="assets")
 
 
