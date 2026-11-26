@@ -1,29 +1,70 @@
 import json
 import os
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
 
-def _is_valid_netscape_cookies(cookie_path: Path) -> bool:
-    """Returns True only if file contains valid 7-column Netscape HTTP cookie rows."""
+def _prepare_netscape_cookies(cookie_path: Path) -> Path | None:
+    """Validates Netscape cookies or auto-converts JSON cookie exports to Netscape format."""
     try:
         raw = cookie_path.read_text(encoding="utf-8", errors="ignore").strip()
     except Exception:
-        return False
-    if not raw or raw.startswith(("{", "[")):
-        return False
+        return None
+    if not raw:
+        return None
+
+    out_tmp = Path(tempfile.gettempdir()) / "ytdlp_cookies.txt"
+
+    # Case 1: JSON array exported by browser extensions (e.g. Cookie-Editor / EditThisCookie)
+    if raw.startswith("["):
+        try:
+            items = json.loads(raw)
+            if isinstance(items, list):
+                netscape_lines = ["# Netscape HTTP Cookie File"]
+                for c in items:
+                    if not isinstance(c, dict):
+                        continue
+                    domain = str(c.get("domain") or "").strip()
+                    name = str(c.get("name") or "").strip()
+                    value = str(c.get("value") or "")
+                    if not domain or not name:
+                        continue
+                    subdomains = "TRUE" if domain.startswith(".") else "FALSE"
+                    path = str(c.get("path") or "/")
+                    secure = "TRUE" if c.get("secure") else "FALSE"
+                    exp_raw = c.get("expirationDate") or c.get("expiry") or 0
+                    try:
+                        expiry = str(int(float(exp_raw)))
+                    except Exception:
+                        expiry = "0"
+                    netscape_lines.append(
+                        f"{domain}	{subdomains}	{path}	{secure}	{expiry}	{name}	{value}"
+                    )
+                if len(netscape_lines) > 1:
+                    out_tmp.write_text("
+".join(netscape_lines) + "
+", encoding="utf-8")
+                    return out_tmp
+        except Exception:
+            return None
+
+    # Case 2: Already Netscape tab-separated format (7 columns per non-comment line)
     valid_rows = 0
     for line in raw.splitlines():
         s = line.strip()
         if not s or s.startswith("#"):
             continue
-        if len(s.split("\t")) >= 7:
+        if len(s.split("	")) >= 7:
             valid_rows += 1
-    return valid_rows > 0
+    if valid_rows > 0:
+        out_tmp.write_text(raw + "
+", encoding="utf-8")
+        return out_tmp
+
+    return None
 
 
 def download_video_from_url(url: str, output_mp4_path: str) -> str:
@@ -61,13 +102,12 @@ def download_video_from_url(url: str, output_mp4_path: str) -> str:
     ]
     for candidate in cookie_candidates:
         if candidate and Path(candidate).is_file():
-            cand_path = Path(candidate)
-            if _is_valid_netscape_cookies(cand_path):
-                writable_cookies = Path(tempfile.gettempdir()) / "ytdlp_cookies.txt"
-                shutil.copy2(cand_path, writable_cookies)
+            prepared = _prepare_netscape_cookies(Path(candidate))
+            if prepared:
+                writable_cookies = prepared
                 break
             else:
-                print(f"[media_service] Ignoring non-Netscape cookies file: {cand_path}")
+                print(f"[media_service] Skipping invalid cookies file: {candidate}")
 
     attempts = []
     if writable_cookies:
