@@ -11,20 +11,50 @@ def download_video_from_url(url: str, output_mp4_path: str) -> str:
     if out_file.exists():
         return str(out_file)
 
+    import os
+    import re
+    import shutil
+    import tempfile
+
+    clean_url = url.strip()
+    if re.search(r"youtube\.com/(@|channel/|c/|user/)", clean_url, re.IGNORECASE):
+        raise ValueError("Please paste a single YouTube video or Shorts link, not a channel URL.")
+    shorts_match = re.search(r"youtube\.com/shorts/([A-Za-z0-9_-]{11})", clean_url)
+    if shorts_match:
+        clean_url = f"https://www.youtube.com/watch?v={shorts_match.group(1)}"
+
     cmd = [
         sys.executable,
         "-m",
         "yt_dlp",
+        "--force-ipv4",
         "-f",
         "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[height<=1080][ext=mp4]/b[height<=1080]",
         "--merge-output-format",
         "mp4",
         "--no-playlist",
-        "-o",
-        str(out_file),
-        url,
     ]
-    subprocess.run(cmd, check=True, capture_output=True, text=True)
+
+    cookie_candidates = [
+        os.getenv("YTDLP_COOKIES_FILE", ""),
+        "/etc/secrets/cookies.txt",
+        "cookies.txt",
+    ]
+    for candidate in cookie_candidates:
+        if candidate and Path(candidate).is_file():
+            writable_cookies = Path(tempfile.gettempdir()) / "ytdlp_cookies.txt"
+            shutil.copy2(candidate, writable_cookies)
+            cmd.extend(["--cookies", str(writable_cookies)])
+            break
+
+    cmd.extend(["-o", str(out_file), clean_url])
+
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as exc:
+        err_lines = [line.strip() for line in (exc.stderr or "").splitlines() if line.strip()]
+        detail = err_lines[-1] if err_lines else str(exc)
+        raise RuntimeError(f"YouTube download failed: {detail}") from exc
     if not out_file.exists():
         raise FileNotFoundError(f"yt-dlp did not produce expected file: {out_file}")
     return str(out_file)
