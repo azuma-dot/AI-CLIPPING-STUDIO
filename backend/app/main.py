@@ -12542,7 +12542,7 @@ from app.temporal.workflows import VideoClippingWorkflow
 
 
 
-BASE_STORAGE = Path(r"C:\ai-clipping-os\storage")
+BASE_STORAGE = Path(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage"))
 
 
 
@@ -14110,7 +14110,7 @@ TEMP_DIR = BASE_STORAGE / "temp"
 
 
 
-FRONTEND_DIR = Path(r"C:\ai-clipping-os\frontend")
+FRONTEND_DIR = Path(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "frontend"))
 
 
 
@@ -17247,6 +17247,7 @@ app = FastAPI(title="AI Clipping OS", version="1.3.0")
 
 
 app.mount("/media/outputs", StaticFiles(directory=str(OUTPUTS_DIR)), name="outputs")
+(FRONTEND_DIR / "assets").mkdir(parents=True, exist_ok=True)
 app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIR / "assets")), name="assets")
 
 
@@ -421015,7 +421016,7 @@ _FREEMIUM_LOCK = _threading.Lock()
 
 
 
-_FREEMIUM_STORE_PATH = Path(r"C:\ai-clipping-os\storage\temp\freemium_quota.json")
+_FREEMIUM_STORE_PATH = Path(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/temp/freemium_quota.json"))
 
 
 
@@ -425087,7 +425088,7 @@ _USER_SPACE_LOCK = _space_threading.Lock()
 
 
 
-_USER_SPACE_PATH = Path(r"C:\ai-clipping-os\storage\temp\user_workspaces.json")
+_USER_SPACE_PATH = Path(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/temp/user_workspaces.json"))
 
 
 
@@ -425835,7 +425836,7 @@ _CLIP_DNA_LOCK = _dna_threading.Lock()
 
 
 
-_CLIP_DNA_PATH = Path(r"C:\ai-clipping-os\storage\temp\clip_dna.json")
+_CLIP_DNA_PATH = Path(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/temp/clip_dna.json"))
 
 
 
@@ -426479,7 +426480,7 @@ _AB_LOCK = _ab_threading.Lock()
 
 
 
-_AB_STORE_PATH = Path(r"C:\ai-clipping-os\storage\temp\ab_tests.json")
+_AB_STORE_PATH = Path(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/temp/ab_tests.json"))
 
 
 
@@ -427587,7 +427588,7 @@ _USER_SPACE_LOCK = _cos_threading.Lock()
 
 
 
-_USER_SPACE_PATH = Path(r"C:\ai-clipping-os\storage\temp\user_workspaces.json")
+_USER_SPACE_PATH = Path(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/temp/user_workspaces.json"))
 
 
 
@@ -428035,7 +428036,7 @@ _CLIP_DNA_LOCK = _cos_threading.Lock()
 
 
 
-_CLIP_DNA_PATH = Path(r"C:\ai-clipping-os\storage\temp\clip_dna.json")
+_CLIP_DNA_PATH = Path(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/temp/clip_dna.json"))
 
 
 
@@ -429839,7 +429840,7 @@ _AB_LOCK = _cos_threading.Lock()
 
 
 
-_AB_STORE_PATH = Path(r"C:\ai-clipping-os\storage\temp\ab_tests.json")
+_AB_STORE_PATH = Path(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/temp/ab_tests.json"))
 
 
 
@@ -430822,7 +430823,7 @@ from fastapi import HTTPException as _CosHTTPException, Body as _CosBody
 from fastapi.responses import FileResponse as _CosFileResponse
 
 def _cos_ffmpeg_bin() -> str:
-    exe = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
+    exe = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
     return exe if _CosPath(exe).exists() else "ffmpeg"
 
 def _cos_probe_duration(video_path: _CosPath) -> float:
@@ -430836,7 +430837,7 @@ def _cos_probe_duration(video_path: _CosPath) -> float:
     return 0.0
 
 def _cos_load_clip_metadata(project_id: str) -> list:
-    storage = _CosPath(r"C:\ai-clipping-os\storage")
+    storage = _CosPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage"))
     found = []
     for jf in storage.rglob("*.json"):
         if "backups" in jf.parts:
@@ -430855,11 +430856,11 @@ def _cos_load_clip_metadata(project_id: str) -> list:
     return found
 
 def _cos_build_srt_for_clip(project_id: str, clip_dur: float, start_offset: float = 0.0) -> str:
-    storage = _CosPath(r"C:\ai-clipping-os\storage")
+    storage = _CosPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage"))
     temp_dir = storage / "temp"
     temp_dir.mkdir(parents=True, exist_ok=True)
     srt_rel = f"storage/temp/cos_captions_{project_id}.srt"
-    srt_abs = _CosPath(r"C:\ai-clipping-os") / srt_rel
+    srt_abs = _CosPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]))) / srt_rel
 
     segments = []
     for jf in storage.rglob("*.json"):
@@ -430915,7 +430916,7 @@ def _cos_build_srt_for_clip(project_id: str, clip_dur: float, start_offset: floa
     return srt_rel
 
 def _cos_resolve_clip_file(project_id: str, clip_filename: str = "") -> _CosPath:
-    out_dir = _CosPath(r"C:\ai-clipping-os\storage\outputs") / project_id
+    out_dir = _CosPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / project_id
     if clip_filename:
         cand = out_dir / _CosPath(clip_filename).name
         if cand.exists():
@@ -430931,7 +430932,7 @@ def _cos_resolve_clip_file(project_id: str, clip_filename: str = "") -> _CosPath
 
 @app.get("/api/cos-preview-video/{project_id}")
 async def cos_stream_preview_video(project_id: str):
-    _storage = _CosPath(r"C:\ai-clipping-os\storage")
+    _storage = _CosPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage"))
     _exts = {".mp4", ".webm", ".mov", ".mkv", ".m4v"}
     _files = [
         f for f in _storage.rglob("*")
@@ -430950,7 +430951,7 @@ async def cos_stream_preview_video(project_id: str):
 
 @app.get("/api/cos-output-clips/{project_id}")
 async def cos_list_output_clips(project_id: str):
-    _out = _CosPath(r"C:\ai-clipping-os\storage\outputs") / project_id
+    _out = _CosPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / project_id
     if not _out.exists():
         return {"clips": []}
     _files = sorted(
@@ -431011,20 +431012,20 @@ async def cos_list_output_clips(project_id: str):
 @app.get("/api/cos-output-file/{project_id}/{filename}")
 async def cos_stream_output_file(project_id: str, filename: str):
     _safe = _CosPath(filename).name
-    _target = _CosPath(r"C:\ai-clipping-os\storage\outputs") / project_id / _safe
+    _target = _CosPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / project_id / _safe
     if not _target.exists():
         raise _CosHTTPException(status_code=404, detail="Clip file not found")
     return _CosFileResponse(str(_target), media_type="video/mp4", filename=_safe)
 
 @app.get("/api/cos-download-all/{project_id}")
 async def cos_download_all_clips_zip(project_id: str):
-    _out = _CosPath(r"C:\ai-clipping-os\storage\outputs") / project_id
+    _out = _CosPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / project_id
     if not _out.exists():
         raise _CosHTTPException(status_code=404, detail="No output folder found")
     _mp4s = [f for f in _out.glob("*.mp4") if f.is_file() and f.stat().st_size > 1024]
     if not _mp4s:
         raise _CosHTTPException(status_code=404, detail="No rendered clips available to zip")
-    _temp = _CosPath(r"C:\ai-clipping-os\storage\temp")
+    _temp = _CosPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/temp"))
     _temp.mkdir(parents=True, exist_ok=True)
     _zip_path = _temp / f"{project_id}_all_shorts.zip"
     with _cos_zip.ZipFile(_zip_path, "w", compression=_cos_zip.ZIP_DEFLATED) as zf:
@@ -431045,7 +431046,7 @@ async def cos_apply_captions_style(payload: dict = _CosBody(...)):
     dur = _cos_probe_duration(src_path)
     srt_rel = _cos_build_srt_for_clip(pid, dur, 0.0)
 
-    out_dir = _CosPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     out_dir.mkdir(parents=True, exist_ok=True)
     clean_stem = _cos_re.sub(r"^(styled_|optimized_)+", "", src_path.stem)
     out_name = f"styled_{clean_stem}.mp4"
@@ -431065,7 +431066,7 @@ async def cos_apply_captions_style(payload: dict = _CosBody(...)):
             "-c:a", "copy", "-movflags", "+faststart",
             str(out_path)
         ],
-        cwd=r"C:\ai-clipping-os",
+        cwd=str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2])),
         capture_output=True, text=True, errors="replace"
     )
     if not out_path.exists() or out_path.stat().st_size < 2048:
@@ -431110,7 +431111,7 @@ async def cos_optimize_watchtime(payload: dict = _CosBody(...)):
     src_path = _cos_resolve_clip_file(pid, clip_fn)
     before_dur = _cos_probe_duration(src_path)
 
-    out_dir = _CosPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     out_dir.mkdir(parents=True, exist_ok=True)
     clean_stem = _cos_re.sub(r"^(styled_|optimized_)+", "", src_path.stem)
     out_name = f"optimized_{clean_stem}.mp4"
@@ -431163,10 +431164,10 @@ async def cos_trim_custom_clip(payload: dict = _CosBody(...)):
     end = max(start + 1.0, float(payload.get("end") or (start + 30)))
     if not pid:
         raise _CosHTTPException(status_code=400, detail="Missing project_id")
-    _src = _CosPath(r"C:\ai-clipping-os\storage\uploads") / f"{pid}.mp4"
+    _src = _CosPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/uploads")) / f"{pid}.mp4"
     if not _src.exists():
         raise _CosHTTPException(status_code=404, detail=f"Source video {pid}.mp4 not found")
-    _out_dir = _CosPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    _out_dir = _CosPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     _out_dir.mkdir(parents=True, exist_ok=True)
     _out_name = f"custom_{int(start)}s_to_{int(end)}s_{pid}.mp4"
     _out_path = _out_dir / _out_name
@@ -431215,7 +431216,7 @@ async def cos_apply_ai_director(payload: dict = _CosDirBody(...)):
     if not pid:
         raise _CosDirHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosDirPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosDirPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosDirHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -431239,7 +431240,7 @@ async def cos_apply_ai_director(payload: dict = _CosDirBody(...)):
     out_name = f"directed_{clean_stem}.mp4"
     out_path = out_dir / out_name
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
     if not _CosDirPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
 
@@ -431318,7 +431319,7 @@ async def cos_apply_smart_reframe(payload: dict = _CosRefBody(...)):
     if not pid:
         raise _CosRefHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosRefPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosRefPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosRefHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -431336,7 +431337,7 @@ async def cos_apply_smart_reframe(payload: dict = _CosRefBody(...)):
     out_name = f"reframed_{clean_stem}.mp4"
     out_path = out_dir / out_name
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
     if not _CosRefPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
 
@@ -431446,7 +431447,7 @@ async def cos_subtitle_transcribe(payload: dict = _CosSubBody(...)):
     if not pid:
         raise _CosSubHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosSubPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosSubPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosSubHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -431507,7 +431508,7 @@ async def cos_subtitle_transcribe(payload: dict = _CosSubBody(...)):
     except Exception:
         pass
 
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosSubPath(ffprobe_bin).exists():
         ffprobe_bin = "ffprobe"
     dur = _cos_probe_duration(ffprobe_bin, src_path)
@@ -431543,7 +431544,7 @@ async def cos_apply_subtitle_studio(payload: dict = _CosSubBody(...)):
     if not pid:
         raise _CosSubHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosSubPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosSubPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosSubHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -431694,7 +431695,7 @@ async def cos_apply_subtitle_studio(payload: dict = _CosSubBody(...)):
 
     ass_path.write_text(ass_header + "\n".join(ass_events) + "\n", encoding="utf-8")
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
     if not _CosSubPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
 
@@ -431824,7 +431825,7 @@ async def cos_apply_sound_design(payload: dict = _CosSndBody(...)):
     if not pid:
         raise _CosSndHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosSndPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosSndPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosSndHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -431844,8 +431845,8 @@ async def cos_apply_sound_design(payload: dict = _CosSndBody(...)):
     out_path = out_dir / out_name
     out_mp3_path = out_dir / out_mp3_name
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosSndPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
     if not _CosSndPath(ffprobe_bin).exists():
@@ -432012,7 +432013,7 @@ async def cos_apply_visual_effects(payload: dict = _CosVfxBody(...)):
     if not pid:
         raise _CosVfxHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosVfxPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosVfxPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosVfxHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -432030,8 +432031,8 @@ async def cos_apply_visual_effects(payload: dict = _CosVfxBody(...)):
     out_name = f"vfx_{clean_stem}.mp4"
     out_path = out_dir / out_name
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosVfxPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
     if not _CosVfxPath(ffprobe_bin).exists():
@@ -432282,7 +432283,7 @@ async def cos_auto_ai_analyze(payload: dict = _CosAutoBody(...)):
     if not pid:
         raise _CosAutoHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosAutoPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosAutoPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosAutoHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -432296,8 +432297,8 @@ async def cos_auto_ai_analyze(payload: dict = _CosAutoBody(...)):
             raise _CosAutoHTTP(status_code=404, detail="No clip MP4 found to analyze")
         src_path = mp4s[0]
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosAutoPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
     if not _CosAutoPath(ffprobe_bin).exists():
@@ -432323,7 +432324,7 @@ async def cos_auto_ai_polish(payload: dict = _CosAutoBody(...)):
     if not pid:
         raise _CosAutoHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosAutoPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosAutoPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosAutoHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -432337,8 +432338,8 @@ async def cos_auto_ai_polish(payload: dict = _CosAutoBody(...)):
             raise _CosAutoHTTP(status_code=404, detail="No clip MP4 found for Auto AI")
         src_path = mp4s[0]
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosAutoPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
     if not _CosAutoPath(ffprobe_bin).exists():
@@ -432706,7 +432707,7 @@ def _cos_exp_build_zip_bundle(
 async def cos_export_center_asset(pid: str, filename: str):
     safe_pid = _CosExpPath(pid).name
     safe_fn = _CosExpPath(filename).name
-    fpath = _CosExpPath(r"C:\ai-clipping-os\storage\outputs") / safe_pid / safe_fn
+    fpath = _CosExpPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / safe_pid / safe_fn
     if not fpath.exists() or not fpath.is_file():
         raise _CosExpHTTP(status_code=404, detail="Export Center asset not found")
     ext = fpath.suffix.lower()
@@ -432728,7 +432729,7 @@ async def cos_export_center_scan(payload: dict = _CosExpBody(...)):
     if not pid:
         raise _CosExpHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosExpPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosExpPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosExpHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -432770,7 +432771,7 @@ async def cos_export_center_render(payload: dict = _CosExpBody(...)):
     if not pid:
         raise _CosExpHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosExpPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosExpPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosExpHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -432778,8 +432779,8 @@ async def cos_export_center_render(payload: dict = _CosExpBody(...)):
     if not src_path:
         raise _CosExpHTTP(status_code=404, detail="No MP4 clip available to export")
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosExpPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
     if not _CosExpPath(ffprobe_bin).exists():
@@ -433196,7 +433197,7 @@ def _cos_vsa_compute_scorecard(sig: dict, platform: str):
 async def cos_viral_score_asset(pid: str, filename: str):
     safe_pid = _CosVsaPath(pid).name
     safe_fn = _CosVsaPath(filename).name
-    fpath = _CosVsaPath(r"C:\ai-clipping-os\storage\outputs") / safe_pid / safe_fn
+    fpath = _CosVsaPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / safe_pid / safe_fn
     if not fpath.exists() or not fpath.is_file():
         raise _CosVsaHTTP(status_code=404, detail="Viral Score asset not found")
     mtype = "application/json" if fpath.suffix.lower() == ".json" else "video/mp4"
@@ -433211,7 +433212,7 @@ async def cos_viral_score_analyze(payload: dict = _CosVsaBody(...)):
     if not pid:
         raise _CosVsaHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosVsaPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosVsaPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosVsaHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -433219,8 +433220,8 @@ async def cos_viral_score_analyze(payload: dict = _CosVsaBody(...)):
     if not src_path:
         raise _CosVsaHTTP(status_code=404, detail="No MP4 clip available for Viral Score Analysis")
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosVsaPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
     if not _CosVsaPath(ffprobe_bin).exists():
@@ -433270,7 +433271,7 @@ async def cos_viral_score_boost(payload: dict = _CosVsaBody(...)):
     if not pid:
         raise _CosVsaHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosVsaPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosVsaPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosVsaHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -433278,8 +433279,8 @@ async def cos_viral_score_boost(payload: dict = _CosVsaBody(...)):
     if not src_path:
         raise _CosVsaHTTP(status_code=404, detail="No MP4 clip available to boost")
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosVsaPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
     if not _CosVsaPath(ffprobe_bin).exists():
@@ -433669,7 +433670,7 @@ def _cos_ab_build_single_variant(
 async def cos_ab_lab_asset(pid: str, filename: str):
     safe_pid = _CosAbPath(pid).name
     safe_fn = _CosAbPath(filename).name
-    fpath = _CosAbPath(r"C:\ai-clipping-os\storage\outputs") / safe_pid / safe_fn
+    fpath = _CosAbPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / safe_pid / safe_fn
     if not fpath.exists() or not fpath.is_file():
         raise _CosAbHTTP(status_code=404, detail="A/B Lab file not found")
     mtype = "application/json" if fpath.suffix.lower() == ".json" else "video/mp4"
@@ -433688,12 +433689,12 @@ async def cos_ab_lab_render(payload: dict = _CosAbBody(...)):
     if not pid:
         raise _CosAbHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosAbPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosAbPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosAbHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosAbPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
     if not _CosAbPath(ffprobe_bin).exists():
@@ -434136,7 +434137,7 @@ def _cos_cqi_evaluate_checks(meta: dict):
 async def cos_quality_inspector_asset(pid: str, filename: str):
     safe_pid = _CosCqiPath(pid).name
     safe_fn = _CosCqiPath(filename).name
-    fpath = _CosCqiPath(r"C:\ai-clipping-os\storage\outputs") / safe_pid / safe_fn
+    fpath = _CosCqiPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / safe_pid / safe_fn
     if not fpath.exists() or not fpath.is_file():
         raise _CosCqiHTTP(status_code=404, detail="Quality Inspector file not found")
     mtype = "application/json" if fpath.suffix.lower() == ".json" else "video/mp4"
@@ -434149,7 +434150,7 @@ async def cos_quality_inspector_scan(payload: dict = _CosCqiBody(...)):
     if not pid:
         raise _CosCqiHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosCqiPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosCqiPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosCqiHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -434157,8 +434158,8 @@ async def cos_quality_inspector_scan(payload: dict = _CosCqiBody(...)):
     if not src_path:
         raise _CosCqiHTTP(status_code=404, detail="No MP4 clip available to inspect")
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosCqiPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
     if not _CosCqiPath(ffprobe_bin).exists():
@@ -434204,7 +434205,7 @@ async def cos_quality_inspector_fix(payload: dict = _CosCqiBody(...)):
     if not pid:
         raise _CosCqiHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosCqiPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosCqiPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosCqiHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -434212,8 +434213,8 @@ async def cos_quality_inspector_fix(payload: dict = _CosCqiBody(...)):
     if not src_path:
         raise _CosCqiHTTP(status_code=404, detail="No MP4 clip available to repair")
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosCqiPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
     if not _CosCqiPath(ffprobe_bin).exists():
@@ -434583,7 +434584,7 @@ def _cos_cap_write_ass(ass_path: _CosCapPath, w: int, h: int, segments, style_id
 async def cos_caption_lab_asset(pid: str, filename: str):
     safe_pid = _CosCapPath(pid).name
     safe_fn = _CosCapPath(filename).name
-    fpath = _CosCapPath(r"C:\ai-clipping-os\storage\outputs") / safe_pid / safe_fn
+    fpath = _CosCapPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / safe_pid / safe_fn
     if not fpath.exists() or not fpath.is_file():
         raise _CosCapHTTP(status_code=404, detail="Caption Lab file not found")
     mtype = "application/x-subrip" if fpath.suffix.lower() == ".srt" else "video/mp4"
@@ -434596,7 +434597,7 @@ async def cos_caption_lab_analyze(payload: dict = _CosCapBody(...)):
     if not pid:
         raise _CosCapHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosCapPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosCapPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosCapHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -434604,8 +434605,8 @@ async def cos_caption_lab_analyze(payload: dict = _CosCapBody(...)):
     if not src_path:
         raise _CosCapHTTP(status_code=404, detail="No MP4 clip available for Caption & Title Lab")
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosCapPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
     if not _CosCapPath(ffprobe_bin).exists():
@@ -434645,7 +434646,7 @@ async def cos_caption_lab_render(payload: dict = _CosCapBody(...)):
     if not pid:
         raise _CosCapHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosCapPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosCapPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosCapHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -434685,8 +434686,8 @@ async def cos_caption_lab_render(payload: dict = _CosCapBody(...)):
     if export_srt_only:
         return {"ok": True, "srt": srt_asset}
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosCapPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
     if not _CosCapPath(ffprobe_bin).exists():
@@ -435007,7 +435008,7 @@ def _cos_hook_render_banner_png(png_path: _CosHookPath, w: int, h: int, headline
 async def cos_hook_lab_asset(pid: str, filename: str):
     safe_pid = _CosHookPath(pid).name
     safe_fn = _CosHookPath(filename).name
-    fpath = _CosHookPath(r"C:\ai-clipping-os\storage\outputs") / safe_pid / safe_fn
+    fpath = _CosHookPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / safe_pid / safe_fn
     if not fpath.exists() or not fpath.is_file():
         raise _CosHookHTTP(status_code=404, detail="Hook Lab asset not found")
     return _CosHookFileResponse(path=str(fpath), media_type="video/mp4", filename=safe_fn)
@@ -435019,7 +435020,7 @@ async def cos_hook_lab_analyze(payload: dict = _CosHookBody(...)):
     if not pid:
         raise _CosHookHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosHookPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosHookPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosHookHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -435027,8 +435028,8 @@ async def cos_hook_lab_analyze(payload: dict = _CosHookBody(...)):
     if not src_path:
         raise _CosHookHTTP(status_code=404, detail="No MP4 clip available for Hook Laboratory")
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosHookPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
     if not _CosHookPath(ffprobe_bin).exists():
@@ -435074,7 +435075,7 @@ async def cos_hook_lab_render(payload: dict = _CosHookBody(...)):
     if not pid:
         raise _CosHookHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosHookPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosHookPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosHookHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -435082,8 +435083,8 @@ async def cos_hook_lab_render(payload: dict = _CosHookBody(...)):
     if not src_path:
         raise _CosHookHTTP(status_code=404, detail="No MP4 clip available to render")
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosHookPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
     if not _CosHookPath(ffprobe_bin).exists():
@@ -435237,7 +435238,7 @@ async def cos_apply_animations(payload: dict = _CosAnimBody(...)):
     if not pid:
         raise _CosAnimHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosAnimPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosAnimPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosAnimHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -435255,8 +435256,8 @@ async def cos_apply_animations(payload: dict = _CosAnimBody(...)):
     out_name = f"anim_{clean_stem}.mp4"
     out_path = out_dir / out_name
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosAnimPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
     if not _CosAnimPath(ffprobe_bin).exists():
@@ -435604,7 +435605,7 @@ def _cos_anim_probe_video(ffprobe_bin: str, media_path: _CosAnimPath):
 async def cos_animations_asset(pid: str, filename: str):
     safe_pid = _CosAnimPath(pid).name
     safe_fn = _CosAnimPath(filename).name
-    fpath = _CosAnimPath(r"C:\ai-clipping-os\storage\outputs") / safe_pid / safe_fn
+    fpath = _CosAnimPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / safe_pid / safe_fn
     if not fpath.exists() or not fpath.is_file():
         raise _CosAnimHTTP(status_code=404, detail="Animated clip not found")
     return _CosAnimFileResponse(path=str(fpath), media_type="video/mp4", filename=safe_fn)
@@ -435621,7 +435622,7 @@ async def cos_animations_apply(payload: dict = _CosAnimBody(...)):
     if not pid:
         raise _CosAnimHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosAnimPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosAnimPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosAnimHTTP(status_code=404, detail=f"Output folder not found for {pid}")
 
@@ -435635,8 +435636,8 @@ async def cos_animations_apply(payload: dict = _CosAnimBody(...)):
             raise _CosAnimHTTP(status_code=404, detail="No MP4 clip available in project outputs")
         src_path = mp4s[0]
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosAnimPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
     if not _CosAnimPath(ffprobe_bin).exists():
@@ -436136,7 +436137,7 @@ def _cos_thumb_score_frame(img_path: _CosThumbPath, ts: float, peak_times):
 async def cos_thumbnail_asset(pid: str, filename: str):
     safe_pid = _CosThumbPath(pid).name
     safe_fn = _CosThumbPath(filename).name
-    fpath = _CosThumbPath(r"C:\ai-clipping-os\storage\outputs") / safe_pid / safe_fn
+    fpath = _CosThumbPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / safe_pid / safe_fn
     if not fpath.exists() or not fpath.is_file():
         raise _CosThumbHTTP(status_code=404, detail="Thumbnail asset not found")
     ext = fpath.suffix.lower()
@@ -436159,7 +436160,7 @@ async def cos_thumbnail_frames(payload: dict = _CosThumbBody(...)):
     if not pid:
         raise _CosThumbHTTP(status_code=400, detail="Missing project_id")
 
-    out_dir = _CosThumbPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosThumbPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     if not out_dir.exists():
         raise _CosThumbHTTP(status_code=404, detail=f"No output folder found for {pid}")
 
@@ -436167,8 +436168,8 @@ async def cos_thumbnail_frames(payload: dict = _CosThumbBody(...)):
     if not src_path:
         raise _CosThumbHTTP(status_code=404, detail="No clip MP4 found to extract thumbnail frames")
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
-    ffprobe_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffprobe.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
+    ffprobe_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffprobe.exe")
     if not _CosThumbPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
     if not _CosThumbPath(ffprobe_bin).exists():
@@ -436245,7 +436246,7 @@ async def cos_thumbnail_upload(
     pid = str(project_id or "").strip()
     if not pid:
         raise _CosThumbHTTP(status_code=400, detail="Missing project_id")
-    out_dir = _CosThumbPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosThumbPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     out_dir.mkdir(parents=True, exist_ok=True)
     ext = _CosThumbPath(file.filename or "upload.png").suffix.lower()
     if ext not in (".png", ".jpg", ".jpeg", ".webp"):
@@ -436270,7 +436271,7 @@ async def cos_thumbnail_save(payload: dict = _CosThumbBody(...)):
     if not pid or not data_url.startswith("data:image/"):
         raise _CosThumbHTTP(status_code=400, detail="Missing project_id or valid canvas image")
 
-    out_dir = _CosThumbPath(r"C:\ai-clipping-os\storage\outputs") / pid
+    out_dir = _CosThumbPath(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / pid
     out_dir.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -436289,7 +436290,7 @@ async def cos_thumbnail_save(payload: dict = _CosThumbBody(...)):
     jpg_path = out_dir / jpg_name
     png_path.write_bytes(img_bytes)
 
-    ffmpeg_bin = r"C:\ai-clipping-os\backend\venv\Scripts\ffmpeg.exe"
+    ffmpeg_bin = str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "backend/venv/Scripts/ffmpeg.exe")
     if not _CosThumbPath(ffmpeg_bin).exists():
         ffmpeg_bin = "ffmpeg"
 
@@ -436351,7 +436352,7 @@ from datetime import datetime as _cos_dt
 from pathlib import Path as _cos_Path
 from pydantic import BaseModel as _cos_BaseModel
 
-_COS_STORAGE_DIR = _cos_Path(r"C:\ai-clipping-os\storage")
+_COS_STORAGE_DIR = _cos_Path(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage"))
 _COS_SUGGESTION_LOG = _COS_STORAGE_DIR / "suggestions.jsonl"
 
 

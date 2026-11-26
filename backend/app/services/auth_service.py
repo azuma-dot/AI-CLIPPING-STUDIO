@@ -8,7 +8,7 @@ import sqlite3
 import time
 from pathlib import Path
 
-STORAGE_DIR = Path(r"C:\ai-clipping-os\storage")
+STORAGE_DIR = Path(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage"))
 DB_PATH = STORAGE_DIR / "app.db"
 CONFIG_PATH = STORAGE_DIR / "runtime_config.json"
 SECRET_PATH = STORAGE_DIR / ".session_secret"

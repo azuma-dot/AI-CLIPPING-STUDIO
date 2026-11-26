@@ -30,14 +30,14 @@ async def inspect_and_extract_audio(job: ClipJobInput) -> dict:
     """Activity 1: Downloads URL if needed, probes video, and extracts 16kHz WAV."""
     source_path = job.source_path
     if job.source_url and (not source_path or not Path(source_path).exists()):
-        target_mp4 = str(Path(r"C:\ai-clipping-os\storage\uploads") / f"{job.project_id}.mp4")
+        target_mp4 = str(Path(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/uploads")) / f"{job.project_id}.mp4")
         activity.logger.info(f"[{job.project_id}] Downloading URL: {job.source_url}")
         source_path = download_video_from_url(job.source_url, target_mp4)
 
     activity.logger.info(f"[{job.project_id}] Probing media: {source_path}")
     metadata = probe_video(source_path)
 
-    wav_path = str(Path(r"C:\ai-clipping-os\storage\temp") / f"{job.project_id}.wav")
+    wav_path = str(Path(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/temp")) / f"{job.project_id}.wav")
     activity.logger.info(f"[{job.project_id}] Extracting audio to: {wav_path}")
     extract_audio_wav(source_path, wav_path)
 
@@ -61,7 +61,7 @@ async def transcribe_audio(media_info: dict) -> dict:
     project_id = media_info["project_id"]
     wav_path = media_info["wav_path"]
     transcript_path = str(
-        Path(r"C:\ai-clipping-os\storage\temp") / f"{project_id}_transcript.json"
+        Path(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/temp")) / f"{project_id}_transcript.json"
     )
 
     activity.logger.info(f"[{project_id}] Transcribing audio (Whisper: {cfg['whisper_model']})...")
@@ -94,7 +94,7 @@ async def detect_viral_highlights(payload: dict) -> dict:
     )
     duration_sec = float(media_info["metadata"].get("duration", 10.0))
     highlights_path = str(
-        Path(r"C:\ai-clipping-os\storage\temp") / f"{project_id}_highlights.json"
+        Path(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/temp")) / f"{project_id}_highlights.json"
     )
 
     activity.logger.info(
@@ -154,8 +154,8 @@ async def render_viral_clips(payload: dict) -> dict:
             transcript=transcript,
             clip=clip,
             project_id=project_id,
-            temp_dir=r"C:\ai-clipping-os\storage\temp",
-            output_dir=r"C:\ai-clipping-os\storage\outputs",
+            temp_dir=str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/temp"),
+            output_dir=str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs"),
             aspect_ratio=effective_ratio,
             captions_enabled=captions_enabled,
         )
@@ -166,7 +166,7 @@ async def render_viral_clips(payload: dict) -> dict:
         launch_res = launch_in_capcut(capcut_target)
         activity.logger.info(f"[{project_id}] Auto-CapCut Shorts handoff: {launch_res}")
 
-    manifest_path = Path(r"C:\ai-clipping-os\storage\outputs") / project_id / "manifest.json"
+    manifest_path = Path(str(next((p for p in Path(__file__).resolve().parents if (p / "frontend").exists()), Path(__file__).resolve().parents[2]) / "storage/outputs")) / project_id / "manifest.json"
     manifest_path.write_text(json.dumps(rendered, indent=2, ensure_ascii=False), encoding="utf-8")
 
     return {
