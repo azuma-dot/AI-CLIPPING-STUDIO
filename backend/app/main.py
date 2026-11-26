@@ -690,7 +690,7 @@ async def polish_clip_studio_pro(
     )
 
     base_label = base_clip.get("hook") or base_clip.get("title") or f"Viral Clip #{clip_index}"
-    pro_title = custom_name if custom_name else f"PRO Ã¢â‚¬â€ {base_label}"
+    pro_title = custom_name if custom_name else f"PRO ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â {base_label}"
     pro_entry = {
         **rendered_pro,
         "title": pro_title,
@@ -774,8 +774,8 @@ async def auto_generate_all_pro_clips(
             game_y=float(body.get("game_y", 0.50)),
         )
         base_label = base_clip.get("hook") or base_clip.get("title") or f"Viral Clip #{clip_num}"
-        clean_base = str(base_label).replace("AI PRO Ã¢â‚¬â€ ", "").replace("PRO Ã¢â‚¬â€ ", "")
-        pro_title = f"AI PRO Ã¢â‚¬â€ {clean_base}"
+        clean_base = str(base_label).replace("AI PRO ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ", "").replace("PRO ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ", "")
+        pro_title = f"AI PRO ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â {clean_base}"
         pro_entry = {
             **rendered_pro,
             "title": pro_title,
@@ -7306,144 +7306,10 @@ async def _fallback_cos_asset(project_id: str, filename: str):
     from fastapi import HTTPException
     raise HTTPException(status_code=404, detail="Asset not generated yet")
 
-# === REAL CLIP GENERATOR FOR CLIP GENERATION UI ===
-import glob as _glob
-import os as _os
-import subprocess as _subprocess
-from fastapi import Request as _Request
-
-def _find_project_source_video(project_id: str):
-    roots = [
-        "/tmp",
-        "storage",
-        "uploads",
-        "downloads",
-        "media",
-        "data",
-        ".",
-    ]
-    exts = (".mp4", ".mkv", ".webm", ".mov", ".m4v")
-    for r in roots:
-        if not _os.path.exists(r):
-            continue
-        for root_dir, _, files in _os.walk(r):
-            if "backups" in root_dir.split(_os.sep):
-                continue
-            for fn in files:
-                if fn.lower().endswith(exts) and (project_id in root_dir or project_id in fn):
-                    full = _os.path.join(root_dir, fn)
-                    if "clips" not in full.lower() and "output" not in full.lower():
-                        if _os.path.getsize(full) > 100_000:
-                            return full
-    return None
-
-def _find_project_clips_dir(project_id: str) -> str:
-    candidates = [
-        _os.path.join("storage", "cos_outputs", project_id),
-        _os.path.join("storage", "clips", project_id),
-        _os.path.join("/tmp", "cos_outputs", project_id),
-        _os.path.join("/tmp", "clips", project_id),
-    ]
-    for c in candidates:
-        if _os.path.isdir(c):
-            return c
-    _os.makedirs(candidates[0], exist_ok=True)
-    return candidates[0]
-
-def _get_media_duration(path: str) -> float:
-    try:
-        out = _subprocess.check_output(
-            [
-                "ffprobe", "-v", "error", "-show_entries", "format=duration",
-                "-of", "default=noprint_wrappers=1:nokey=1", path
-            ],
-            stderr=_subprocess.DEVNULL,
-            text=True,
-            timeout=20,
-        ).strip()
-        return max(0.0, float(out))
-    except Exception:
-        return 0.0
-
-def _cut_clips_low_ram(project_id: str, min_len: int = 30, max_len: int = 45, max_clips: int = 3):
-    src = _find_project_source_video(project_id)
-    if not src:
-        return {"ok": False, "error": f"No downloaded source video found for {project_id}", "clips": []}
-
-    out_dir = _find_project_clips_dir(project_id)
-    duration = _get_media_duration(src)
-    clip_len = max(10, min(max_len, int((min_len + max_len) / 2)))
-
-    if duration > clip_len:
-        step = max(clip_len, int(duration / (max_clips + 1)))
-        starts = [i * step for i in range(max_clips) if (i * step) + 5 < duration]
-        if not starts:
-            starts = [0]
-    else:
-        starts = [0]
-
-    created = []
-    for idx, start_sec in enumerate(starts[:max_clips], start=1):
-        out_name = f"{project_id}_clip_{idx}.mp4"
-        out_path = _os.path.join(out_dir, out_name)
-        cmd = [
-            "ffmpeg", "-y", "-ss", str(start_sec), "-t", str(clip_len),
-            "-i", src, "-c", "copy", "-movflags", "+faststart", out_path
-        ]
-        res = _subprocess.run(cmd, stdout=_subprocess.DEVNULL, stderr=_subprocess.PIPE, text=True, timeout=120)
-        if res.returncode != 0 or not _os.path.exists(out_path) or _os.path.getsize(out_path) < 10_000:
-            # Lightweight fallback re-encode capped at 720p for 512MB RAM
-            cmd_fb = [
-                "ffmpeg", "-y", "-ss", str(start_sec), "-t", str(clip_len),
-                "-i", src, "-vf", "scale=-2:720", "-c:v", "libx264", "-preset", "ultrafast",
-                "-crf", "28", "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart", out_path
-            ]
-            res = _subprocess.run(cmd_fb, stdout=_subprocess.DEVNULL, stderr=_subprocess.PIPE, text=True, timeout=180)
-        if res.returncode == 0 and _os.path.exists(out_path) and _os.path.getsize(out_path) > 10_000:
-            created.append({
-                "id": f"clip-{idx}",
-                "index": idx,
-                "filename": out_name,
-                "start": start_sec,
-                "duration": clip_len,
-                "url": f"/api/cos-output-file/{project_id}/{out_name}",
-            })
-
-    if not created:
-        return {"ok": False, "error": "ffmpeg could not cut clips from source video", "clips": []}
-
-    return {"ok": True, "project_id": project_id, "count": len(created), "clips": created}
-
-@app.post("/api/projects/{project_id}/generate-clips")
-@app.post("/api/cos-generate-clips")
-async def _wired_generate_clips(request: _Request, project_id: str = ""):
-    body = {}
-    try:
-        body = await request.json()
-    except Exception:
-        pass
-    pid = project_id or body.get("project_id") or body.get("id") or ""
-    bounds = str(body.get("bounds") or body.get("target_length") or body.get("length") or "30-45")
-    nums = [int(x) for x in __import__("re").findall(r"\d+", bounds)]
-    min_len = nums[0] if len(nums) >= 1 else 30
-    max_len = nums[1] if len(nums) >= 2 else max(min_len, 45)
-    result = _cut_clips_low_ram(pid, min_len=min_len, max_len=max_len, max_clips=3)
-    if not result.get("ok"):
-        from fastapi import HTTPException
-        raise HTTPException(status_code=400, detail=result.get("error", "Clip generation failed"))
-    return result
-
-@app.get("/api/projects/{project_id}/clips")
-async def _wired_project_clips(project_id: str):
-    out_dir = _find_project_clips_dir(project_id)
-    files = sorted([f for f in _os.listdir(out_dir) if f.lower().endswith(".mp4")]) if _os.path.isdir(out_dir) else []
-    clips = [
-        {
-            "id": f"clip-{i+1}",
-            "index": i + 1,
-            "filename": fn,
-            "url": f"/api/cos-output-file/{project_id}/{fn}",
-        }
-        for i, fn in enumerate(files)
-    ]
-    return {"project_id": project_id, "clips": clips}
+# === ALLOW UNSAFE-EVAL IN CSP FOR FRONTEND SCRIPTS ===
+@app.middleware("http")
+async def _csp_unsafe_eval_middleware(request, call_next):
+response = await call_next(request)
+if "text/html" in response.headers.get("content-type", ""):
+    response.headers["Content-Security-Policy"] = "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;"
+return response
