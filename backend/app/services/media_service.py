@@ -106,21 +106,25 @@ def download_video_from_url(url: str, output_mp4_path: str) -> str:
 
     attempts = []
     if writable_cookies:
-        attempts.append(base_cmd + ["--cookies", str(writable_cookies), "-o", str(out_file), clean_url])
-    attempts.append(base_cmd + ["-o", str(out_file), clean_url])
-    attempts.append(
-        base_cmd + ["--extractor-args", "youtube:player_client=android,web", "-o", str(out_file), clean_url]
-    )
+        print(f"[media_service] Using cookies from: {writable_cookies}")
+        attempts.append(("with_cookies", base_cmd + ["-v", "--cookies", str(writable_cookies), "-o", str(out_file), clean_url]))
+    else:
+        print("[media_service] No valid cookies file found; running unauthenticated.")
+        attempts.append(("no_cookies", base_cmd + ["-v", "-o", str(out_file), clean_url]))
 
     last_detail = "Unknown yt-dlp error"
-    for cmd in attempts:
+    for label, cmd in attempts:
         try:
             subprocess.run(cmd, check=True, capture_output=True, text=True)
             if out_file.exists() and out_file.stat().st_size > 0:
                 return str(out_file)
+            last_detail = f"yt-dlp exited 0 ({label}) without creating output file"
         except subprocess.CalledProcessError as exc:
-            err_lines = [line.strip() for line in (exc.stderr or "").splitlines() if line.strip()]
-            last_detail = err_lines[-1] if err_lines else str(exc)
+            stderr = (exc.stderr or "").strip()
+            stdout = (exc.stdout or "").strip()
+            print(f"[media_service] yt-dlp failed ({label}):\n{stderr or stdout}")
+            err_lines = [line for line in stderr.splitlines() if "ERROR:" in line or "WARNING:" in line]
+            last_detail = " | ".join(err_lines[-3:]) if err_lines else (stderr[-500:] or str(exc))
 
     raise RuntimeError(f"YouTube download failed: {last_detail}")
 
