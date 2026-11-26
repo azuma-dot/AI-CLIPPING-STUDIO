@@ -1,20 +1,37 @@
-﻿import json
+import json
+import os
+import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
+
+
+def _is_valid_netscape_cookies(cookie_path: Path) -> bool:
+    """Returns True only if file contains valid 7-column Netscape HTTP cookie rows."""
+    try:
+        raw = cookie_path.read_text(encoding="utf-8", errors="ignore").strip()
+    except Exception:
+        return False
+    if not raw or raw.startswith(("{", "[")):
+        return False
+    valid_rows = 0
+    for line in raw.splitlines():
+        s = line.strip()
+        if not s or s.startswith("#"):
+            continue
+        if len(s.split("\t")) >= 7:
+            valid_rows += 1
+    return valid_rows > 0
 
 
 def download_video_from_url(url: str, output_mp4_path: str) -> str:
     """Downloads a YouTube/Twitch/social video as MP4 using yt-dlp."""
     out_file = Path(output_mp4_path)
     out_file.parent.mkdir(parents=True, exist_ok=True)
-    if out_file.exists():
+    if out_file.exists() and out_file.stat().st_size > 0:
         return str(out_file)
-
-    import os
-    import re
-    import shutil
-    import tempfile
 
     clean_url = url.strip()
     if re.search(r"youtube\.com/(@|channel/|c/|user/)", clean_url, re.IGNORECASE):
@@ -23,41 +40,54 @@ def download_video_from_url(url: str, output_mp4_path: str) -> str:
     if shorts_match:
         clean_url = f"https://www.youtube.com/watch?v={shorts_match.group(1)}"
 
-    cmd = [
+    base_cmd = [
         sys.executable,
         "-m",
         "yt_dlp",
         "--force-ipv4",
         "-f",
-        "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[height<=1080][ext=mp4]/b[height<=1080]",
+        "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[height<=1080][ext=mp4]/b[height<=1080]/best",
         "--merge-output-format",
         "mp4",
         "--no-playlist",
     ]
 
+    writable_cookies = None
     cookie_candidates = [
         os.getenv("YTDLP_COOKIES_FILE", ""),
         "/etc/secrets/cookies.txt",
         "cookies.txt",
+        "backend/cookies.txt",
     ]
     for candidate in cookie_candidates:
         if candidate and Path(candidate).is_file():
-            writable_cookies = Path(tempfile.gettempdir()) / "ytdlp_cookies.txt"
-            shutil.copy2(candidate, writable_cookies)
-            cmd.extend(["--cookies", str(writable_cookies)])
-            break
+            cand_path = Path(candidate)
+            if _is_valid_netscape_cookies(cand_path):
+                writable_cookies = Path(tempfile.gettempdir()) / "ytdlp_cookies.txt"
+                shutil.copy2(cand_path, writable_cookies)
+                break
+            else:
+                print(f"[media_service] Ignoring non-Netscape cookies file: {cand_path}")
 
-    cmd.extend(["-o", str(out_file), clean_url])
+    attempts = []
+    if writable_cookies:
+        attempts.append(base_cmd + ["--cookies", str(writable_cookies), "-o", str(out_file), clean_url])
+    attempts.append(base_cmd + ["-o", str(out_file), clean_url])
+    attempts.append(
+        base_cmd + ["--extractor-args", "youtube:player_client=android,web", "-o", str(out_file), clean_url]
+    )
 
-    try:
-        subprocess.run(cmd, check=True, capture_output=True, text=True)
-    except subprocess.CalledProcessError as exc:
-        err_lines = [line.strip() for line in (exc.stderr or "").splitlines() if line.strip()]
-        detail = err_lines[-1] if err_lines else str(exc)
-        raise RuntimeError(f"YouTube download failed: {detail}") from exc
-    if not out_file.exists():
-        raise FileNotFoundError(f"yt-dlp did not produce expected file: {out_file}")
-    return str(out_file)
+    last_detail = "Unknown yt-dlp error"
+    for cmd in attempts:
+        try:
+            subprocess.run(cmd, check=True, capture_output=True, text=True)
+            if out_file.exists() and out_file.stat().st_size > 0:
+                return str(out_file)
+        except subprocess.CalledProcessError as exc:
+            err_lines = [line.strip() for line in (exc.stderr or "").splitlines() if line.strip()]
+            last_detail = err_lines[-1] if err_lines else str(exc)
+
+    raise RuntimeError(f"YouTube download failed: {last_detail}")
 
 
 def probe_video(video_path: str) -> dict:
