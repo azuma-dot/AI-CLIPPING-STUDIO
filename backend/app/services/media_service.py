@@ -82,7 +82,7 @@ def download_video_from_url(url: str, output_mp4_path: str) -> str:
         "yt_dlp",
         "--force-ipv4",
         "-f",
-        "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[height<=1080][ext=mp4]/b[height<=1080]/best",
+        "bv*[height<=1080]+ba/b[height<=1080]/best", "--remote-components", "ejs:npm",
         "--merge-output-format",
         "mp4",
         "--no-playlist",

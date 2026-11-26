@@ -1,4 +1,5 @@
 FROM python:3.12-slim
+COPY --from=denoland/deno:bin /deno /usr/local/bin/deno
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
@@ -18,7 +19,6 @@ WORKDIR /app/backend
 ENV PORT=8080
 EXPOSE 8080
 
-RUN pip install --no-cache-dir --upgrade pip "yt-dlp[default]"
 RUN curl -fsSL https://deno.land/install.sh | sh
 ENV PATH="/root/.deno/bin:/opt/render/.deno/bin:${PATH}"
 
