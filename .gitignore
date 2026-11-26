@@ -1,36 +1,8 @@
-﻿# Python & virtual environment
-backend/venv/
+storage/
+*.jsonl
+.env
 venv/
+.venv/
 __pycache__/
 *.pyc
-*.pyo
-
-# Secrets & local config
-.env
-*.env
-*.key
-*.pem
-
-# Large media, temp files & local backups
-storage/uploads/
-storage/outputs/
-storage/temp/
-storage/backups/
-*.mp4
-*.mov
-*.mkv
-*.avi
-*.wav
-
-# OS / Editor files
-.DS_Store
-Thumbs.db
-.vscode/
-
-# Local storage, secrets & databases
-storage/
-*.db
-
-# Local storage, secrets & databases
-storage/
-*.db
+_tmp_*.py
