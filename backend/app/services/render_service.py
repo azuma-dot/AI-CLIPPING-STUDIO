@@ -367,10 +367,10 @@ def render_vertical_clip(
         )
         # CapCut Pro style rhythmic punch-zoom (1.0x <-> 1.08x every 4.5s) + speaker tracking
         zoom_cond = r"lt(mod(t\,9.0)\,4.5)"
-        cw = f"if({zoom_cond}\,1166\,1080)"
-        ch = f"if({zoom_cond}\,2074\,1920)"
-        cx = f"min(max((iw-{cw})*({norm_x_expr})\,0)\,iw-{cw})"
-        cy = f"if({zoom_cond}\,0\,76)"
+        cw = rf"if({zoom_cond}\,1166\,1080)"
+        ch = rf"if({zoom_cond}\,2074\,1920)"
+        cx = rf"min(max((iw-{cw})*({norm_x_expr})\,0)\,iw-{cw})"
+        cy = rf"if({zoom_cond}\,0\,76)"
         base_video_chain = (
             f"[0:v]scale=-2:2074,"
             f"crop=w='{cw}':h='{ch}':x='{cx}':y='{cy}',"
@@ -610,10 +610,10 @@ def pro_polish_clip(
         y_hi = max(0, zoom_h - 1920)
         y_lo = y_hi // 2
         zoom_cond = r"lt(mod(t\,8.0)\,4.0)"
-        cw = f"if({zoom_cond}\,{zoom_w}\,1080)"
-        ch = f"if({zoom_cond}\,{zoom_h}\,1920)"
-        cx = f"min(max((iw-{cw})*({norm_x_expr})\,0)\,iw-{cw})"
-        cy = f"if({zoom_cond}\,0\,{y_lo})"
+        cw = rf"if({zoom_cond}\,{zoom_w}\,1080)"
+        ch = rf"if({zoom_cond}\,{zoom_h}\,1920)"
+        cx = rf"min(max((iw-{cw})*({norm_x_expr})\,0)\,iw-{cw})"
+        cy = rf"if({zoom_cond}\,0\,{y_lo})"
         v_chain = (
             f"[0:v]scale=-2:{zoom_h},"
             f"crop=w='{cw}':h='{ch}':x='{cx}':y='{cy}',"
