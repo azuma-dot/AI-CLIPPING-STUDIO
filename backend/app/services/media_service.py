@@ -162,7 +162,13 @@ def download_video_from_url(url: str, output_mp4_path: str) -> str:
         stderr = (exc.stderr or "").strip()
         stdout = (exc.stdout or "").strip()
 
-        print(f"[media_service] yt-dlp failed:\n{stderr or stdout}")
+        print("[media_service] yt-dlp process failed.")
+
+        if stdout:
+            print(f"[media_service] yt-dlp stdout:\n{stdout}")
+
+        if stderr:
+            print(f"[media_service] yt-dlp stderr:\n{stderr}")
 
         err_lines = [
             line for line in stderr.splitlines()
