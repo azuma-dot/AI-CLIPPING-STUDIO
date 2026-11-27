@@ -7309,7 +7309,7 @@ async def _fallback_cos_asset(project_id: str, filename: str):
 # === ALLOW UNSAFE-EVAL IN CSP FOR FRONTEND SCRIPTS ===
 @app.middleware("http")
 async def _csp_unsafe_eval_middleware(request, call_next):
-response = await call_next(request)
-if "text/html" in response.headers.get("content-type", ""):
-    response.headers["Content-Security-Policy"] = "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;"
-return response
+    response = await call_next(request)
+    if "text/html" in response.headers.get("content-type", ""):
+        response.headers["Content-Security-Policy"] = "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;"
+    return response
