@@ -9090,7 +9090,7 @@ footer { color: #8f99ae; }
     // Update preview video source inside the active AI Editing tab if it has an empty/stale src
     const stageVid = stage.querySelector("video");
     if (stageVid && clipFn) {
-      const expectedSrc = `/api/cos-preview-clip/${encodeURIComponent(pid)}/${encodeURIComponent(clipFn)}`;
+      const expectedSrc = `/api/cos-output-file/${encodeURIComponent(pid)}/${encodeURIComponent(clipFn)}`;
       if (!stageVid.getAttribute("src") || stageVid.getAttribute("src").includes("undefined")) {
         stageVid.src = expectedSrc;
       }
