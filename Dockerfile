@@ -31,8 +31,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl git ca-cer
 RUN git clone --single-branch --branch 2.0.2 https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git /opt/bgutil \
     && cd /opt/bgutil/server && npm ci && npx tsc \
     && chmod -R a+rX /opt/bgutil
-RUN pip install --no-cache-dir -U "yt-dlp[default]" bgutil-ytdlp-pot-provider==2.0.2 \
-    || pip install --no-cache-dir --break-system-packages -U "yt-dlp[default]" bgutil-ytdlp-pot-provider==2.0.2
+RUN (python -m pip install --no-cache-dir --upgrade "yt-dlp[default]" "bgutil-ytdlp-pot-provider==2.0.2" \
+    || python -m pip install --no-cache-dir --break-system-packages --upgrade "yt-dlp[default]" "bgutil-ytdlp-pot-provider==2.0.2") \
+    && python -m pip show bgutil-ytdlp-pot-provider
+
 # === CLOUDFLARE WARP + DENO FOR YT-DLP ===
 COPY --from=denoland/deno:bin /deno /usr/local/bin/deno
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates tar && rm -rf /var/lib/apt/lists/* \
@@ -43,7 +45,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
     && find /tmp/wp -name wireproxy -type f -exec mv {} /usr/local/bin/wireproxy \; \
     && chmod +x /usr/local/bin/wireproxy \
     && rm -rf /tmp/wp \
-    && (pip install --no-cache-dir -U "yt-dlp[default]" pysocks || pip install --no-cache-dir --break-system-packages -U "yt-dlp[default]" pysocks)
+    && (pip install --no-cache-dir pysocks || pip install --no-cache-dir --break-system-packages pysocks)
 COPY start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
 CMD ["sh", "-c", "/usr/local/bin/start.sh uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]

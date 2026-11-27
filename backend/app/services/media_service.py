@@ -80,6 +80,7 @@ def download_video_from_url(url: str, output_mp4_path: str) -> str:
     if shorts_match:
         clean_url = f"https://www.youtube.com/watch?v={shorts_match.group(1)}"
 
+ 
     base_cmd = [
         sys.executable, "-m", "yt_dlp",
         "--force-ipv4",
@@ -89,17 +90,28 @@ def download_video_from_url(url: str, output_mp4_path: str) -> str:
         "--newline",
         "-f", "bv*[height<=1080]+ba/b[height<=1080]/best",
         "--remote-components", "ejs:npm",
+        "--extractor-args",
+        "youtube:player-client=mweb",
         "--merge-output-format", "mp4",
         "--no-playlist",
     ]
 
     writable_cookies = None
-    cookie_candidates = [
+
+    disable_cookies = (
+        os.getenv("YTDLP_DISABLE_COOKIES", "").strip().lower()
+        in {"1", "true", "yes"}
+    )
+
+    cookie_candidates = [] if disable_cookies else [
         os.getenv("YTDLP_COOKIES_FILE", ""),
         "/etc/secrets/cookies.txt",
         "cookies.txt",
         "backend/cookies.txt",
     ]
+
+    if disable_cookies:
+        print("[media_service] Cookie usage disabled by configuration.")
 
     for candidate in cookie_candidates:
         if candidate and Path(candidate).is_file():
@@ -108,6 +120,7 @@ def download_video_from_url(url: str, output_mp4_path: str) -> str:
                 writable_cookies = prepared
                 break
             print(f"[media_service] Skipping invalid cookies file: {candidate}")
+
 
     cmd = base_cmd.copy()
 
