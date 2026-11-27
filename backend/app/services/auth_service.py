@@ -1,4 +1,4 @@
-﻿import base64
+import base64
 import hashlib
 import hmac
 import json
@@ -23,6 +23,9 @@ DEFAULT_CONFIG = {
 
 
 def _get_secret_key() -> bytes:
+    _env_secret = __import__("os").environ.get("SESSION_SECRET", "").strip()
+    if _env_secret:
+        return _env_secret.encode("utf-8")
     STORAGE_DIR.mkdir(parents=True, exist_ok=True)
     if not SECRET_PATH.exists():
         SECRET_PATH.write_text(secrets.token_hex(32), encoding="utf-8")
@@ -118,13 +121,13 @@ def init_db() -> None:
         if not admin_row:
             conn.execute(
                 "INSERT INTO users (username, email, password_hash, role, created_at) VALUES (?, ?, ?, 'admin', ?)",
-                ("admin", "admin@aiclipping.local", hash_password("admin1234"), time.time()),
+                ("admin", "admin@aiclipping.local", hash_password(__import__("os").environ.get("ADMIN_PASSWORD", "admin1234")), time.time()),
             )
         creator_row = conn.execute("SELECT id FROM users WHERE username = 'creator' LIMIT 1").fetchone()
         if not creator_row:
             conn.execute(
                 "INSERT INTO users (username, email, password_hash, role, created_at) VALUES (?, ?, ?, 'user', ?)",
-                ("creator", "creator@aiclipping.local", hash_password("user1234"), time.time()),
+                ("creator", "creator@aiclipping.local", hash_password(__import__("os").environ.get("CREATOR_PASSWORD", "user1234")), time.time()),
             )
 
 
