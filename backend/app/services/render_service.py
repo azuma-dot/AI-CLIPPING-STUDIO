@@ -394,7 +394,7 @@ def render_vertical_clip(
         filter_complex = f"{base_video_chain}[vout]"
 
     cmd = [
-        "ffmpeg",
+        "ffmpeg", "-threads", "1",
         "-y",
         "-ss",
         str(start),
@@ -430,7 +430,7 @@ def render_vertical_clip(
     if is_short:
         if captions_enabled:
             clean_cmd = [
-                "ffmpeg",
+                "ffmpeg", "-threads", "1",
                 "-y",
                 "-ss",
                 str(start),
@@ -657,7 +657,7 @@ def pro_polish_clip(
     pro_full_path = out_path / pro_filename
 
     cmd = [
-        "ffmpeg",
+        "ffmpeg", "-threads", "1",
         "-y",
         "-ss",
         str(start),

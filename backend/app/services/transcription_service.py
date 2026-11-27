@@ -1,4 +1,4 @@
-﻿import json
+import json
 import subprocess
 import wave
 from pathlib import Path
@@ -24,11 +24,10 @@ def _load_wav_float32(wav_path: str) -> np.ndarray:
     return np.frombuffer(frames, dtype=np.int16).astype(np.float32) / 32768.0
 
 
-def get_whisper_model(model_size: str = "base") -> WhisperModel:
+def get_whisper_model(model_size: str = "tiny") -> WhisperModel:
     if model_size not in _MODEL_CACHE:
         device, compute_type = _detect_device()
-        _MODEL_CACHE[model_size] = WhisperModel(
-            model_size,
+        _MODEL_CACHE[model_size] = WhisperModel("tiny",
             device=device,
             compute_type=compute_type,
         )
@@ -38,7 +37,7 @@ def get_whisper_model(model_size: str = "base") -> WhisperModel:
 def transcribe_wav_to_json(
     wav_path: str,
     output_json_path: str,
-    model_size: str = "base",
+    model_size: str = "tiny",
 ) -> dict:
     """Transcribes 16kHz WAV audio with word-level timestamps and saves a checkpoint JSON."""
     out_file = Path(output_json_path)
