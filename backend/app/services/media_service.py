@@ -62,29 +62,34 @@ def _prepare_netscape_cookies(cookie_path: Path) -> Path | None:
     return None
 
 
+
 def download_video_from_url(url: str, output_mp4_path: str) -> str:
-    """Downloads a YouTube/Twitch/social video as MP4 using yt-dlp."""
+    """Downloads a video using yt-dlp with bounded network waits."""
     out_file = Path(output_mp4_path)
     out_file.parent.mkdir(parents=True, exist_ok=True)
+
     if out_file.exists() and out_file.stat().st_size > 0:
         return str(out_file)
 
     clean_url = url.strip()
+
     if re.search(r"youtube\.com/(@|channel/|c/|user/)", clean_url, re.IGNORECASE):
         raise ValueError("Please paste a single YouTube video or Shorts link, not a channel URL.")
+
     shorts_match = re.search(r"youtube\.com/shorts/([A-Za-z0-9_-]{11})", clean_url)
     if shorts_match:
         clean_url = f"https://www.youtube.com/watch?v={shorts_match.group(1)}"
 
     base_cmd = [
-        sys.executable,
-        "-m",
-        "yt_dlp",
+        sys.executable, "-m", "yt_dlp",
         "--force-ipv4",
-        "-f",
-        "bv*[height<=1080]+ba/b[height<=1080]/best", "--remote-components", "ejs:npm",
-        "--merge-output-format",
-        "mp4",
+        "--socket-timeout", "30",
+        "--retries", "3",
+        "--fragment-retries", "3",
+        "--newline",
+        "-f", "bv*[height<=1080]+ba/b[height<=1080]/best",
+        "--remote-components", "ejs:npm",
+        "--merge-output-format", "mp4",
         "--no-playlist",
     ]
 
@@ -95,38 +100,67 @@ def download_video_from_url(url: str, output_mp4_path: str) -> str:
         "cookies.txt",
         "backend/cookies.txt",
     ]
+
     for candidate in cookie_candidates:
         if candidate and Path(candidate).is_file():
             prepared = _prepare_netscape_cookies(Path(candidate))
             if prepared:
                 writable_cookies = prepared
                 break
-            else:
-                print(f"[media_service] Skipping invalid cookies file: {candidate}")
+            print(f"[media_service] Skipping invalid cookies file: {candidate}")
 
-    attempts = []
+    cmd = base_cmd.copy()
+
     if writable_cookies:
         print(f"[media_service] Using cookies from: {writable_cookies}")
-        attempts.append(("with_cookies", base_cmd + ["-v", "--cookies", str(writable_cookies), "-o", str(out_file), clean_url]))
+        cmd.extend(["--cookies", str(writable_cookies)])
     else:
         print("[media_service] No valid cookies file found; running unauthenticated.")
-        attempts.append(("no_cookies", base_cmd + ["-v", "-o", str(out_file), clean_url]))
 
-    last_detail = "Unknown yt-dlp error"
-    for label, cmd in attempts:
-        try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True)
-            if out_file.exists() and out_file.stat().st_size > 0:
-                return str(out_file)
-            last_detail = f"yt-dlp exited 0 ({label}) without creating output file"
-        except subprocess.CalledProcessError as exc:
-            stderr = (exc.stderr or "").strip()
-            stdout = (exc.stdout or "").strip()
-            print(f"[media_service] yt-dlp failed ({label}):\n{stderr or stdout}")
-            err_lines = [line for line in stderr.splitlines() if "ERROR:" in line or "WARNING:" in line]
-            last_detail = " | ".join(err_lines[-3:]) if err_lines else (stderr[-500:] or str(exc))
+    cmd.extend(["-v", "-o", str(out_file), clean_url])
 
-    raise RuntimeError(f"YouTube download failed: {last_detail}")
+    try:
+        print(f"[media_service] Starting download: {clean_url}")
+
+        result = subprocess.run(
+            cmd,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=600,
+        )
+
+        if out_file.exists() and out_file.stat().st_size > 0:
+            print(f"[media_service] Download completed: {out_file}")
+            return str(out_file)
+
+        raise RuntimeError("yt-dlp finished without creating the output video.")
+
+    except subprocess.TimeoutExpired:
+        if out_file.exists():
+            out_file.unlink()
+
+        raise RuntimeError(
+            "Video download timed out after 10 minutes. "
+            "The source may be unavailable or the connection may be blocked."
+        )
+
+    except subprocess.CalledProcessError as exc:
+        stderr = (exc.stderr or "").strip()
+        stdout = (exc.stdout or "").strip()
+
+        print(f"[media_service] yt-dlp failed:\n{stderr or stdout}")
+
+        err_lines = [
+            line for line in stderr.splitlines()
+            if "ERROR:" in line or "WARNING:" in line
+        ]
+
+        detail = " | ".join(err_lines[-3:]) if err_lines else (
+            stderr[-500:] or str(exc)
+        )
+
+        raise RuntimeError(f"YouTube download failed: {detail}")
 
 
 def probe_video(video_path: str) -> dict:
