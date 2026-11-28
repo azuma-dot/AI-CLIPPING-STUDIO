@@ -1,4 +1,4 @@
-import json
+﻿import json
 import os
 import re
 import subprocess
@@ -113,6 +113,19 @@ def download_video_from_url(url: str, output_mp4_path: str) -> str:
     if disable_cookies:
         print("[media_service] Cookie usage disabled by configuration.")
 
+    print("[COOKIE_DIAG] Starting cookie checks.")
+    for diagnostic_path in cookie_candidates:
+        if not diagnostic_path:
+            continue
+        p = Path(diagnostic_path)
+        print(f"[COOKIE_DIAG] Path={p}; exists={p.exists()}; is_file={p.is_file()}")
+        if p.is_file():
+            try:
+                raw_diag = p.read_text(encoding="utf-8", errors="ignore").strip()
+                rows_diag = sum(1 for line in raw_diag.splitlines() if line.strip() and not line.strip().startswith("#") and len(line.strip().split("\t")) >= 7)
+                print(f"[COOKIE_DIAG] Readable; Netscape_header={raw_diag.startswith('# Netscape HTTP Cookie File')}; valid_rows={rows_diag}")
+            except Exception as exc:
+                print(f"[COOKIE_DIAG] Read failed: {type(exc).__name__}")
     for candidate in cookie_candidates:
         if candidate and Path(candidate).is_file():
             prepared = _prepare_netscape_cookies(Path(candidate))
