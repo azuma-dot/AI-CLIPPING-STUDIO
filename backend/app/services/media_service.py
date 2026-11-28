@@ -1,4 +1,4 @@
-﻿import json
+import json
 import os
 import re
 import subprocess
@@ -153,8 +153,6 @@ def download_video_from_url(url: str, output_mp4_path: str) -> str:
         result = subprocess.run(
             cmd,
             check=True,
-            capture_output=True,
-            text=True,
             timeout=600,
         )
 
