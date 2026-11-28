@@ -103,6 +103,8 @@ def download_video_from_url(url: str, output_mp4_path: str) -> str:
         in {"1", "true", "yes"}
     )
 
+    print(f"[COOKIE_DIAG] Raw YTDLP_DISABLE_COOKIES={os.getenv('YTDLP_DISABLE_COOKIES')!r}; parsed_disabled={disable_cookies}")
+
     cookie_candidates = [] if disable_cookies else [
         os.getenv("YTDLP_COOKIES_FILE", ""),
         "/etc/secrets/cookies.txt",
